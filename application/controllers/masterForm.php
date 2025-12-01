@@ -260,7 +260,7 @@ class MasterForm extends CI_Controller{
 
         if (!empty($vessel)) {
             $sql .= " AND vessel = " . $this->db->escape($vessel);
-            $
+            
         }
 
         $sql .= " ORDER BY category ASC LIMIT 10";

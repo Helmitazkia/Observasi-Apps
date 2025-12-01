@@ -94,7 +94,7 @@
                         <?php 
                           $usrType = $this->session->userdata('userType');
                           $idJabatan = $this->session->userdata('idJabatan');
-                          if($usrType == "admin" OR $idJabatan == 1)
+                          if($usrType == "admin" OR $idJabatan == 1 OR $idJabatan == 999)
                           {
                         ?>
                         <ul class="sub" style="display:none;">

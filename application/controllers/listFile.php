@@ -13,22 +13,32 @@ class ListFile extends CI_Controller{
         $this->getData();
     }
 
-    function getData($searchNya = "")
+    function getData()
 	{
-		$dataOut = array();
+	
+	    $dataOut = array();
 		$trNya = "";
 		$no = 1;
-		$dataOutVessel = $this->getVessel();
+
+		
+		$dataOutVessel     = $this->getVessel();
 		$dataOutVesselType = $this->getVesselType();
 
+	
 		$userId   = $this->session->userdata('userId');
-		$userType = strtolower($this->session->userdata('userType')); 
+		$userType = strtolower($this->session->userdata('userType'));
+
+		$txtSearch = $this->input->post('txtSearch', true);
+		$startDate = $this->input->post('startDate', true);
+		$endDate   = $this->input->post('endDate', true);
+		$slcVessel = $this->input->post('slcVessel', true);
 
 		$whereNya = " WHERE 1=1";
 
+		
 		if ($userType != 'admin') {
-			$idVesselLogin = $this->session->userdata('idVesselLogin');
-			$vesselTypeLogin = $this->session->userdata('vesselTypeLogin');
+			$idVesselLogin    = $this->session->userdata('idVesselLogin');
+			$vesselTypeLogin  = $this->session->userdata('vesselTypeLogin');
 
 			$whereNya .= " AND (
 				lf.user_id = '".$userId."'
@@ -39,20 +49,26 @@ class ListFile extends CI_Controller{
 			)";
 		}
 
-		if ($searchNya == "search") {
-			$txtSearch = $this->input->post('txtSearch', true);
-			$slcVessel = $this->input->post('slcVessel', true);
+	
+		if (!empty($txtSearch)) {
 
-			if (!empty($txtSearch)) {
-				$whereNya .= " AND (lf.department LIKE '%".$txtSearch."%' 
-								OR lf.category LIKE '%".$txtSearch."%' 
-								OR lf.file LIKE '%".$txtSearch."%' 
-								OR lf.remarks LIKE '%".$txtSearch."%')";
-			}
+			$whereNya .= " AND (
+				lf.name_user LIKE '%".$txtSearch."%' 
+				OR lf.category LIKE '%".$txtSearch."%' 
+				OR lf.filename LIKE '%".$txtSearch."%' 
+				OR lf.vessel LIKE '%".$txtSearch."%'
+				OR lf.vesselType LIKE '%".$txtSearch."%'
+			)";
 
 			if (!empty($slcVessel) && $slcVessel != "all") {
 				$whereNya .= " AND lf.vessel = '".$slcVessel."'";
 			}
+		}
+
+
+		if (!empty($startDate) && !empty($endDate)) {
+
+			$whereNya .= " AND DATE(lf.upload_time) BETWEEN '".$startDate."' AND '".$endDate."'";
 		}
 
 		$sql = "
@@ -161,11 +177,14 @@ class ListFile extends CI_Controller{
 		$dataOut['trNya'] = $trNya;
 		$dataOut["vessel"] = $dataOutVessel;
 		$dataOut['vesselType'] = $dataOutVesselType;
-		if ($searchNya == "") {
-			$this->load->view('front/listFile', $dataOut);
-		} else {
-			print json_encode($dataOut);
+
+		if ($this->input->is_ajax_request()) {
+			echo json_encode($dataOut);
+			return;
 		}
+
+		$this->load->view('front/listFile', $dataOut);
+
 	}
 
     function getVessel($id = "")
