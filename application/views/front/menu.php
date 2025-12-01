@@ -28,6 +28,8 @@
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
+
+     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -134,3 +136,4 @@
 <script src="<?php echo base_url();?>assets/js/jquery-ui-1.9.2.custom.min.js"></script>
 <!--common script for all pages-->
 <script src="<?php echo base_url();?>assets/js/common-scripts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>

@@ -19,7 +19,30 @@
         });
     });
 
+
+
+    var tsVessel;
+    var tsVesselType;
+    var tsCategory;
+
+
     $(document).ready(function() {
+        
+       tsVessel = new TomSelect(".slcVessel",{
+            create: false,
+            searchField: ["text"]
+        });
+
+        tsVesselType = new TomSelect(".slcVesselType",{
+            create: false,
+            searchField: ["text"]
+        });
+
+        tsCategory = new TomSelect(".txtCategory", {
+            create: false,
+            allowEmptyOption: true,
+            placeholder: "Select Category"
+        });
 
         $(document).on("change", ".slcVessel, .slcVesselType", function() {
             loadCategories();
@@ -28,79 +51,8 @@
         $(document).on("change", ".txtCategory", function() {
             loadFileData();
         });
-
-        function loadCategories() {
-            var vessel = $(".slcVessel").val();
-            var vesselType = $(".slcVesselType").val();
-
-            if (!vessel || !vesselType) {
-                $(".txtCategory").html('<option value="">-- Select Category --</option>');
-                return;
-            }
-
-            $.ajax({
-                url: "<?php echo base_url('listFile/getCategories'); ?>",
-                type: "GET",
-                dataType: "json",
-                data: {
-                    vessel: vessel,
-                    vesselType: vesselType
-                },
-                success: function(data) {
-                    var options = '<option value="">-- Select Category --</option>';
-                    $.each(data, function(i, item) {
-                        options += '<option value="' + item.value + '">' + item.label +
-                            '</option>';
-                    });
-                    $(".txtCategory").html(options);
-                },
-                error: function() {
-                    $(".txtCategory").html(
-                        '<option value="">-- Error loading categories --</option>');
-                }
-            });
-        }
-
-        function loadFileData() {
-            var vessel = $(".slcVessel").val();
-            var vesselType = $(".slcVesselType").val();
-            var cat = $(".txtCategory").val();
-
-            if (!vessel || !vesselType) {
-                return;
-            }
-
-            $.ajax({
-                url: "<?php echo base_url('listFile/getFileData'); ?>",
-                type: "POST",
-                data: {
-                    vessel: vessel,
-                    vesselType: vesselType,
-                    category: cat
-                },
-                beforeSend: function() {
-                    $("#tbodyFile").html(
-                        '<tr><td colspan="6" class="text-center">Loading...</td></tr>');
-                },
-                success: function(res) {
-                    $("#tbodyFile").html(res);
-                },
-                error: function() {
-                    $("#tbodyFile").html(
-                        '<tr><td colspan="6" class="text-center">Error loading data</td></tr>');
-                }
-            });
-        }
-
-        window.resetFilters = function() {
-            $('.slcVessel').val('');
-            $('.slcVesselType').val('');
-            $('.txtCategory').html('<option value="">-- Select Category --</option>');
-            $('#tbodyFile').html(
-                '<tr><td colspan="6" class="text-center text-muted">Select a vessel & department</td></tr>'
-            );
-        };
     });
+
 
     $(document).on("click", ".btnSaveFile", function(e) {
         var fileId = $(this).data("id");
@@ -159,7 +111,7 @@
                 error: function(xhr, status, error) {
                     $("#idLoadingSpinner").fadeOut(200);
                     console.error("Upload error:", error);
-                    alert("❌ Error uploading file, please try again!");
+                    alert("Error uploading file, please try again!");
                 },
                 complete: function() {
                     $("#btnUpload").prop("disabled", false).text("Upload");
@@ -213,6 +165,94 @@
             }
         });
     });
+
+
+    function resetFilters() {
+        tsVessel.clear();
+        tsVesselType.clear();
+        tsCategory.clear();
+
+        tsCategory.clearOptions();
+        tsCategory.addOption({ value: "", text: "Select Category" });
+        tsCategory.refreshOptions(false);
+
+        $("#tbodyFile").html(
+            '<tr><td colspan="6" class="text-center text-muted">Select vessel & type</td></tr>'
+        );
+    }
+
+    function loadCategories() {
+        var vessel = $(".slcVessel").val();
+        var vesselType = $(".slcVesselType").val();
+
+        if (!vessel || !vesselType) {
+            if (tsCategory) {
+                tsCategory.clearOptions();
+                tsCategory.addOption({ value: "", text: "Select Category" });
+                tsCategory.refreshOptions(false);
+            }
+            return;
+        }
+
+        $.ajax({
+            url: "<?php echo base_url('listFile/getCategories'); ?>",
+            type: "GET",
+            dataType: "json",
+            data: {
+                vessel: vessel,
+                vesselType: vesselType
+            },
+            success: function(data) {
+                tsCategory.clearOptions();
+                tsCategory.addOption({ value: "", text: "Select Category" });
+                $.each(data, function(i, item) {
+                    tsCategory.addOption({ 
+                        value: item.value, 
+                        text: item.label 
+                    });
+                });
+
+                tsCategory.refreshOptions(false);
+            },
+            error: function() {
+                tsCategory.clearOptions();
+                tsCategory.addOption({ value: "", text: "-- Error loading categories --" });
+                tsCategory.refreshOptions(false);
+            }
+        });
+    }
+
+    function loadFileData() {
+        var vessel = $(".slcVessel").val();
+        var vesselType = $(".slcVesselType").val();
+        var cat = $(".txtCategory").val();
+
+        if (!vessel || !vesselType) {
+            return;
+        }
+
+        $.ajax({
+            url: "<?php echo base_url('listFile/getFileData'); ?>",
+            type: "POST",
+            data: {
+                vessel: vessel,
+                vesselType: vesselType,
+                category: cat
+            },
+            beforeSend: function() {
+                $("#tbodyFile").html(
+                    '<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+            },
+            success: function(res) {
+                $("#tbodyFile").html(res);
+            },
+            error: function() {
+                $("#tbodyFile").html(
+                    '<tr><td colspan="6" class="text-center">Error loading data</td></tr>');
+            }
+        });
+    }
+
     </script>
 </head>
 
@@ -291,7 +331,9 @@
                                         <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
                                             Vessel Typec</th>
                                         <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            File</th>
+                                            Old File</th>
+                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
+                                            New File</th>
                                         <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
                                             Category</th>
                                         <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
@@ -336,8 +378,8 @@
                         <div style="display:flex; gap:20px; flex-wrap:wrap;">
                             <div style="flex:1; min-width:220px;">
                                 <label
-                                    style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Nama
-                                    Kapal</label>
+                                    style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Name 
+                                    Vessel</label>
                                 <select name="slcVessel" class="slcVessel" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;
                                     background:#f9fafb; font-size:14px;">
                                     <?php echo $vessel; ?>
@@ -355,7 +397,7 @@
                                     style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Category</label>
                                 <select name="txtCategory" class="txtCategory" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;
                                     background:#f9fafb; font-size:14px;">
-                                    <option value="">-- Select Category --</option>
+                                    <option value="">Select Category</option>
                                 </select>
                             </div>
                             <div style="flex:1; min-width:140px; display:flex; align-items:flex-end;">

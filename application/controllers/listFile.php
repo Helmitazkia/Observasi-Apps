@@ -76,6 +76,7 @@ class ListFile extends CI_Controller{
 							onclick=\"openUploadModal('".$val->id_file."');\">Upload</button>";
 
 				$fileLinks = "";
+				$filenewLink = "";
 
 				if (!empty($val->raw_file)) {
 					$filePath = str_replace("uploads/masterFileUpdate/", "uploads/masterfile/", $val->raw_file);
@@ -107,7 +108,7 @@ class ListFile extends CI_Controller{
 				}
 
 				if (!empty($val->upload_time) && !empty($val->file)) {
-					$fileLinks .= "
+					$filenewLink .= "
 						<a href='" . base_url($val->file) . "' target='_blank'
 						style=\"
 							color:#28a745;
@@ -132,6 +133,7 @@ class ListFile extends CI_Controller{
 				$trNya .= "<td style='font-size:13px; color:#2563eb; padding:10px 12px; font-weight:500;'>".$val->filename."</td>";
 				$trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->vesselType."</td>";
 				$trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$fileLinks."</td>";
+				$trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$filenewLink."</td>";
 
 				$badgeColor = "#dbeafe"; $textColor = "#1d4ed8";
 				if (stripos($val->category, 'Engine') !== false) { $badgeColor = "#dcfce7"; $textColor = "#166534"; }
