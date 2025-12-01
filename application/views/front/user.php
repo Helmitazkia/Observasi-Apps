@@ -235,7 +235,7 @@
 									<i class="fa fa-ban"></i>
 									Cancel
 								</button>
-							</dir>
+							</div>
 						</div>
 					</div>
 				</div>

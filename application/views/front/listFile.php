@@ -121,51 +121,70 @@
     });
 
     $(document).ready(function() {
-        getData("");
-
-        function getData(txtSearch) {
-            $.ajax({
-                url: "<?php echo base_url('listFile/getData/search'); ?>",
-                type: "POST",
-                data: {
-                    txtSearch: txtSearch
-                },
-                dataType: "json",
-                beforeSend: function() {
-                    $("#idTbodyHistory").html(
-                        "<tr><td colspan='7' style='text-align:center;'>Loading...</td></tr>"
-                    );
-                },
-                success: function(res) {
-                    if (res.trNya && res.trNya !== "") {
-                        $("#idTbodyHistory").html(res.trNya);
-                    } else {
-                        $("#idTbodyHistory").html(
-                            "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>"
-                        );
-                    }
-                },
-                error: function() {
-                    $("#idTbodyHistory").html(
-                        "<tr><td colspan='7' style='text-align:center;color:red;'>Error loading data</td></tr>"
-                    );
-                }
-            });
-        }
+        getData("", "", "");
 
         $("#btnSearch").click(function() {
-            var txtSearch = $("#txtSearch").val();
-            getData(txtSearch);
+            FilterData();
         });
 
         $("#txtSearch").keypress(function(e) {
             if (e.which === 13) {
-                var txtSearch = $(this).val();
-                getData(txtSearch);
+                getsearchOnEnter();
             }
         });
+
+
+        
     });
 
+    function getData(txtSearch,startDate,endDate) {
+        $.ajax({
+            url: "<?php echo base_url('listFile/getData/search'); ?>",
+            type: "POST",
+            data: {
+                txtSearch: txtSearch,
+                startDate : startDate,
+                endDate : endDate
+            },
+            dataType: "json",
+            beforeSend: function() {
+                $("#idTbodyHistory").html(
+                    "<tr><td colspan='7' style='text-align:center;'>Loading...</td></tr>"
+                );
+            },
+            success: function(res) {
+                console.log(res)
+                if (res.trNya && res.trNya !== "") {
+                    $("#idTbodyHistory").html(res.trNya);
+                } else {
+                    $("#idTbodyHistory").html(
+                        "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>"
+                    );
+                }
+            },
+            error: function() {
+                $("#idTbodyHistory").html(
+                    "<tr><td colspan='7' style='text-align:center;color:red;'>Error loading data</td></tr>"
+                );
+            }
+        });
+    }
+
+
+    function FilterData() {
+        var txtSearch = $("#txtSearch").val();
+        var startDate = $("#startDate").val();
+        var endDate = $("#endDate").val();
+        getData(txtSearch, startDate, endDate);
+    }
+
+
+    function getsearchOnEnter() {
+        var txtSearch = $("#txtSearch").val();
+        var startDate = $("#startDate").val();
+        var endDate = $("#endDate").val();
+        getData(txtSearch, startDate, endDate);
+    }
 
     function resetFilters() {
         tsVessel.clear();
@@ -293,22 +312,32 @@
                     <!-- Header -->
                     <div
                         style="display:flex; justify-content:space-between; align-items:center;
-                        padding:16px 20px; background:linear-gradient(90deg,#f9fafb,#f3f4f6); border-bottom:1px solid ">
+                        padding:10px 20px; background:linear-gradient(90deg,#f9fafb,#f3f4f6); border-bottom:1px solid ">
                         <h4 style="margin:0; font-weight:600; color:#111827; font-size:17px;
                             display:flex; align-items:center; letter-spacing:0.3px;">
                             <i class="fa fa-folder-open text-primary" style="margin-right:8px;"></i> Form SMS
                         </h4>
                         <div style="display:flex; align-items:center; gap:10px;">
                             <button type="button" id="btnAdd" class="btn btn-primary btn-sm"
-                                style="background:#2563eb; border:none; padding:8px 14px; border-radius:6px;
+                                style="background:#2563eb; border:none; padding:8px 14px; border-radius:60px;
                             color:white; font-size:14px; font-weight:500; display:flex; align-items:center; cursor:pointer;">
                                 <i class="fa fa-download" style="margin-right:6px;"></i>Download
                             </button>
-                            <input type="text" id="txtSearch" placeholder="Search file..." style="border:1px solid #d1d5db; border-radius:6px; padding:8px 12px;
-                             width:220px; font-size:14px; transition:all 0.2s;">
+                            <input type="text" id="txtSearch" style="border:1px solid #d1d5db; border-radius:30px; padding:8px 12px;
+                                font-size:14px; width:200px; "placeholder="Search...">
+                             <input type="date" id="startDate" 
+                                style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
+                                font-size:14px; width:150px;">
+
+                            <span style="font-size:14px; color:#6b7280;">To</span>
+
+                            <input type="date" id="endDate"
+                                style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
+                                font-size:14px; width:150px;">
+
                             <button id="btnSearch"
                                 style="background:#059669; border:none; padding:8px 14px; border-radius:6px;
-                             color:white; font-size:14px; font-weight:500; display:flex; align-items:center; cursor:pointer;">
+                             color:white; font-size:14px; font-weight:500; display:flex; align-items:center; cursor:pointer; border-radius:30px">
                                 <i class="fa fa-search" style="margin-right:6px;"></i>Search
                             </button>
                         </div>
