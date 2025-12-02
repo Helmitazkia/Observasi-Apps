@@ -469,6 +469,33 @@
                 }
             });
         }
+
+        function updateStatus(actionName, id_file) {
+            var formData = new FormData();
+            formData.append("slcFileNameUpload", id_file);
+            formData.append("action", actionName);
+
+            console.log("Updating status with data:", formData);
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: "json",
+                success: function (res) {
+                    console.log("Response:", res);
+                    alert("Status updated!");
+                    location.reload();
+                },
+                error: function (xhr) {
+                    console.log(xhr.responseText);
+                    alert("Error update status!");
+                }
+            });
+        }
+
     </script>
 </head>
 

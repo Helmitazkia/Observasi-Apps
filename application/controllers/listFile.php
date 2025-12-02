@@ -172,29 +172,89 @@ class ListFile extends CI_Controller{
 
 				// $trNya .= "<td style='text-align:center; padding:10px 12px;'>".$btnAct."</td>";
 
-				// Kolom Approval - Master
-				$masterStatus = ($val->status_master == 'N') ? 
-					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
-					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
-				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$masterStatus."</td>";
+				// ==========================
+				// 1. MASTER
+				// ==========================
+				// ==========================
+				// 1. MASTER
+				// ==========================
+				$masterStatus = ($val->status_master != "")
+					? "<span style='color:green; font-weight:bold;'>{$val->status_master}</span>"
+					: "
+						<button onclick=\"updateStatus('update-status-master', '{$val->id_file}')\"
+							style='background:#00CC66; color:white; padding:5px 10px; border-radius:6px;
+							border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
+							APPROVE
+						</button>
+					";
 
-				// Kolom Approval - OS
-				$osStatus = ($val->status_os == 'N') ? 
-					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
-					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
-				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$osStatus."</td>";
+				$trNya .= "
+					<td style='text-align:center; font-size:12px; padding:10px 8px;'>
+						{$masterStatus}
+					</td>
+				";
 
-				// Kolom Approval - Deck
-				$deckStatus = ($val->status_deck == 'N') ? 
-					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
-					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
-				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$deckStatus."</td>";
 
-				// Kolom Approval - Engine
-				$engineStatus = ($val->status_engine == 'N') ? 
-					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
-					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
-				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$engineStatus."</td>";
+				// ==========================
+				// 2. OS
+				// ==========================
+				$osStatus = ($val->status_os != "")
+					? "<span style='color:green; font-weight:bold;'>{$val->status_os}</span>"
+					: "
+						<button onclick=\"updateStatus('update-status-os', '{$val->id_file}')\"
+							style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
+							border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
+							REVIEW
+						</button>
+					";
+
+				$trNya .= "
+					<td style='text-align:center; font-size:12px; padding:10px 8px;'>
+						{$osStatus}
+					</td>
+				";
+
+
+				// ==========================
+				// 3. DECK
+				// ==========================
+				$deckStatus = ($val->status_deck != "")
+					? "<span style='color:green; font-weight:bold;'>{$val->status_deck}</span>"
+					: "
+						<button onclick=\"updateStatus('update-status-deck', '{$val->id_file}')\"
+							style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
+							border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
+							REVIEW
+						</button>
+					";
+
+				$trNya .= "
+					<td style='text-align:center; font-size:12px; padding:10px 8px;'>
+						{$deckStatus}
+					</td>
+				";
+
+
+				// ==========================
+				// 4. ENGINE
+				// ==========================
+				$engineStatus = ($val->status_engine != "")
+					? "<span style='color:green; font-weight:bold;'>{$val->status_engine}</span>"
+					: "
+						<button onclick=\"updateStatus('update-status-engine', '{$val->id_file}')\"
+							style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
+							border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
+							REVIEW
+						</button>
+					";
+
+				$trNya .= "
+					<td style='text-align:center; font-size:12px; padding:10px 8px;'>
+						{$engineStatus}
+					</td>
+				";
+
+
 				
 
 
@@ -486,7 +546,7 @@ class ListFile extends CI_Controller{
 
 		$cek = $this->observasi->getDataQuery("SELECT * FROM listFile WHERE id_file = " . $this->db->escape($idFile) . " LIMIT 1");
 
-		if ($action ="upload-file-update" &&  $cek && count($cek) > 0) {
+		if ($action == "upload-file-update" &&  $cek && count($cek) > 0) {
 			$this->db->where("id_file", $idFile);
 			$this->db->update("listFile", array(
 				"user_id"     => $userId,
@@ -497,7 +557,7 @@ class ListFile extends CI_Controller{
 			));
 
 			print json_encode(array("status" => "success", "message" => "✅ Upload Success..!!"));
-		}else if($action ="update-status-master" &&  $cek && count($cek) > 0) {
+		}else if($action =="update-status-master" &&  $cek && count($cek) > 0) {
 			$this->db->where("id_file", $idFile);
 			$this->db->update("listFile", array(
 				"user_id"     => $userId,
@@ -506,7 +566,7 @@ class ListFile extends CI_Controller{
 			));
 
 			print json_encode(array("status" => "success", "message" => " Success Approved Master !!"));
-		}else if ($action ="update-status-os" &&  $cek && count($cek) > 0) {
+		}else if ($action =="update-status-os" &&  $cek && count($cek) > 0) {
 			$this->db->where("id_file", $idFile);
 			$this->db->update("listFile", array(
 				"user_id"     => $userId,
@@ -515,7 +575,7 @@ class ListFile extends CI_Controller{
 			));
 
 			print json_encode(array("status" => "success", "message" => " Success Approved OS !!"));
-		}else if ($action ="update-status-deck" &&  $cek && count($cek) > 0) {
+		}else if ($action =="update-status-deck" &&  $cek && count($cek) > 0) {
 			$this->db->where("id_file", $idFile);
 			$this->db->update("listFile", array(
 				"user_id"     => $userId,
@@ -524,7 +584,7 @@ class ListFile extends CI_Controller{
 			));
 
 			print json_encode(array("status" => "success", "message" => " Success Review Deck !!"));
-		}else if ($action ="update-status-engine" &&  $cek && count($cek) > 0) {
+		}else if ($action =="update-status-engine" &&  $cek && count($cek) > 0) {
 			$this->db->where("id_file", $idFile);
 			$this->db->update("listFile", array(
 				"user_id"     => $userId,
