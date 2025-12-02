@@ -278,6 +278,49 @@ class ListFile extends CI_Controller{
 	}
 
 
+	function getFileName()
+	{
+		$vessel     = strtolower($this->input->post('vessel', true));
+		$vesselType = strtolower($this->input->post('vesselType', true));
+		$category   = strtolower($this->input->post('category', true));
+
+		$sql   = "SELECT DISTINCT id,filename FROM mstfile WHERE deletests = 0";
+		$where = array();
+
+		if ($vessel !== 'all') {
+			$where[] = "LOWER(vessel) = " . $this->db->escape($vessel);
+		}
+
+		if ($vesselType !== 'all') {
+			$where[] = "LOWER(vesselType) = " . $this->db->escape($vesselType);
+		}
+
+		if (!empty($category)) {
+			$where[] = "LOWER(category) = " . $this->db->escape($category);
+		}
+
+		if (!empty($where)) {
+			$sql .= " AND " . implode(" AND ", $where);
+		}
+
+		$sql .= " ORDER BY filename ASC";
+
+		$rsl = $this->observasi->getDataQuery($sql);
+
+		$out = array();
+		foreach ($rsl as $row) {
+			$out[] = array(
+				"label" => $row->filename,
+				"value" => $row->id
+			);
+		}
+
+		echo json_encode($out);
+	}
+
+
+
+
 	function getFileData()
 	{
 		$vesselInput   = $this->input->post('vessel', true);
@@ -379,11 +422,15 @@ class ListFile extends CI_Controller{
 
 	function saveToListFile()
 	{
-		$idFile   = $this->input->post("idFile", true); 
+		// $idFile   = $this->input->post("idFile", true); 
+		$idFile   = $this->input->post("slcFileNameUpload", true);
 		$fullName = $this->session->userdata('fullName');
 		$userId   = $this->session->userdata('userId');
 		$dateNow  = date("Y-m-d H:i:s");
-		$departement = $this->input->post("departement", true);
+		$departement = $this->input->post("slcDepartementUpload", true);
+		$action = $this->input->post("action", true);
+
+
 
 		if (!$idFile) {
 			echo json_encode(array("status" => "error", "message" => "idFile kosong"));
@@ -439,17 +486,55 @@ class ListFile extends CI_Controller{
 
 		$cek = $this->observasi->getDataQuery("SELECT * FROM listFile WHERE id_file = " . $this->db->escape($idFile) . " LIMIT 1");
 
-		if ($cek && count($cek) > 0) {
+		if ($action ="upload-file-update" &&  $cek && count($cek) > 0) {
 			$this->db->where("id_file", $idFile);
 			$this->db->update("listFile", array(
-				"upload_time" => $dateNow,
+				"user_id"     => $userId,
 				"name_user"   => $fullName,
+				"upload_time" => $dateNow,
 				"file"        => $rawFileName,
-				"departement" => $departement // TAMBAH INI
+				"departement" => $departement 
 			));
 
 			print json_encode(array("status" => "success", "message" => "✅ Upload Success..!!"));
-		} else {
+		}else if($action ="update-status-master" &&  $cek && count($cek) > 0) {
+			$this->db->where("id_file", $idFile);
+			$this->db->update("listFile", array(
+				"user_id"     => $userId,
+				"name_user"   => $fullName,
+				"status_master" => $dateNow,
+			));
+
+			print json_encode(array("status" => "success", "message" => " Success Approved Master !!"));
+		}else if ($action ="update-status-os" &&  $cek && count($cek) > 0) {
+			$this->db->where("id_file", $idFile);
+			$this->db->update("listFile", array(
+				"user_id"     => $userId,
+				"name_user"   => $fullName,
+				"status_os"     => $dateNow,
+			));
+
+			print json_encode(array("status" => "success", "message" => " Success Approved OS !!"));
+		}else if ($action ="update-status-deck" &&  $cek && count($cek) > 0) {
+			$this->db->where("id_file", $idFile);
+			$this->db->update("listFile", array(
+				"user_id"     => $userId,
+				"name_user"   => $fullName,
+				"status_deck"   => $dateNow,
+			));
+
+			print json_encode(array("status" => "success", "message" => " Success Review Deck !!"));
+		}else if ($action ="update-status-engine" &&  $cek && count($cek) > 0) {
+			$this->db->where("id_file", $idFile);
+			$this->db->update("listFile", array(
+				"user_id"     => $userId,
+				"name_user"   => $fullName,
+				"status_engine" => $dateNow,
+			));
+
+			print json_encode(array("status" => "success", "message" => " Success Review Engine !!"));
+		}else {
+			#insert new record
 			$dataIns = array(
 				"id_file"       => $idFile,
 				"name_user"     => $fullName,
