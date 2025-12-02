@@ -5,273 +5,284 @@
 
 <head>
     <script type="text/javascript">
-    $(document).ready(function() {
-        $("#btnAdd").click(function() {
-            $("#mainContentDataTable").fadeOut(300, function() {
-                $("#mainContentDownloadFile").fadeIn(300);
+        $(document).ready(function () {
+            $("#btnAdd").click(function () {
+                $("#mainContentDataTable").fadeOut(300, function () {
+                    $("#mainContentDownloadFile").fadeIn(300);
+                });
+            });
+
+            $("#btnCancelUpload").click(function () {
+                $("#mainContentDownloadFile").fadeOut(300, function () {
+                    $("#mainContentDataTable").fadeIn(300);
+                });
             });
         });
 
-        $("#btnCancelUpload").click(function() {
-            $("#mainContentDownloadFile").fadeOut(300, function() {
-                $("#mainContentDataTable").fadeIn(300);
+
+
+        var tsVessel;
+        var tsVesselType;
+        var tsCategory;
+
+
+        $(document).ready(function () {
+
+            tsVessel = new TomSelect(".slcVessel", {
+                create: false,
+                searchField: ["text"]
+            });
+
+            tsVesselType = new TomSelect(".slcVesselType", {
+                create: false,
+                searchField: ["text"]
+            });
+
+            tsCategory = new TomSelect(".txtCategory", {
+                create: false,
+                allowEmptyOption: true,
+                placeholder: "Select Category"
+            });
+
+            $(document).on("change", ".slcVessel, .slcVesselType", function () {
+                loadCategories();
+            });
+
+            $(document).on("change", ".txtCategory", function () {
+                loadFileData();
             });
         });
-    });
 
 
-
-    var tsVessel;
-    var tsVesselType;
-    var tsCategory;
-
-
-    $(document).ready(function() {
-        
-       tsVessel = new TomSelect(".slcVessel",{
-            create: false,
-            searchField: ["text"]
-        });
-
-        tsVesselType = new TomSelect(".slcVesselType",{
-            create: false,
-            searchField: ["text"]
-        });
-
-        tsCategory = new TomSelect(".txtCategory", {
-            create: false,
-            allowEmptyOption: true,
-            placeholder: "Select Category"
-        });
-
-        $(document).on("change", ".slcVessel, .slcVesselType", function() {
-            loadCategories();
-        });
-
-        $(document).on("change", ".txtCategory", function() {
-            loadFileData();
-        });
-    });
-
-
-    $(document).on("click", ".btnSaveFile", function(e) {
-        var fileId = $(this).data("id");
-
-        $.ajax({
-            url: "<?php echo base_url('listFile/saveToListFile'); ?>",
-            type: "POST",
-            dataType: "json",
-            data: {
-                idFile: fileId
-            },
-            success: function(res) {
-                alert(res.message);
-                location.reload();
-            },
-            error: function(xhr, status, error) {
-                console.log("Error:", error);
-                console.log(xhr.responseText);
-            }
-        });
-
-    });
-
-    function openUploadModal(id) {
-        $("#idFile").val(id);
-        $("#modalUploadFile").modal("show");
-    }
-
-    $(document).ready(function() {
-        $("#formUploadFile").on("submit", function(e) {
-            e.preventDefault();
-
-            var formData = new FormData(this);
+        $(document).on("click", ".btnSaveFile", function (e) {
+            var fileId = $(this).data("id");
 
             $.ajax({
                 url: "<?php echo base_url('listFile/saveToListFile'); ?>",
                 type: "POST",
-                data: formData,
                 dataType: "json",
-                contentType: false,
-                processData: false,
-                beforeSend: function() {
-                    $("#idLoadingSpinner").fadeIn(200);
+                data: {
+                    idFile: fileId
                 },
-                success: function(res) {
-                    $("#idLoadingSpinner").fadeOut(200);
-
-                    if (res.status === "success") {
-                        alert(res.message);
-                        $("#modalUploadFile").modal("hide");
-                        location.reload();
-                    } else {
-                        alert(res.message || "⚠️ Terjadi kesalahan.");
-                    }
+                success: function (res) {
+                    alert(res.message);
+                    location.reload();
                 },
-                error: function(xhr, status, error) {
-                    $("#idLoadingSpinner").fadeOut(200);
-                    console.error("Upload error:", error);
-                    alert("Error uploading file, please try again!");
-                },
-                complete: function() {
-                    $("#btnUpload").prop("disabled", false).text("Upload");
+                error: function (xhr, status, error) {
+                    console.log("Error:", error);
+                    console.log(xhr.responseText);
                 }
             });
-        });
-    });
 
-    $(document).ready(function() {
-        getData("", "", "");
-
-        $("#btnSearch").click(function() {
-            FilterData();
         });
 
-        $("#txtSearch").keypress(function(e) {
-            if (e.which === 13) {
-                getsearchOnEnter();
-            }
+        function openUploadModal(id) {
+            $("#idFile").val(id);
+            $("#modalUploadFile").modal("show");
+        }
+
+        $(document).ready(function () {
+            $("#formUploadFile").on("submit", function (e) {
+                e.preventDefault();
+
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+                    type: "POST",
+                    data: formData,
+                    dataType: "json",
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function () {
+                        $("#idLoadingSpinner").fadeIn(200);
+                    },
+                    success: function (res) {
+                        $("#idLoadingSpinner").fadeOut(200);
+
+                        if (res.status === "success") {
+                            alert(res.message);
+                            $("#modalUploadFile").modal("hide");
+                            location.reload();
+                        } else {
+                            alert(res.message || "⚠️ Terjadi kesalahan.");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $("#idLoadingSpinner").fadeOut(200);
+                        console.error("Upload error:", error);
+                        alert("Error uploading file, please try again!");
+                    },
+                    complete: function () {
+                        $("#btnUpload").prop("disabled", false).text("Upload");
+                    }
+                });
+            });
         });
 
+        $(document).ready(function () {
+            getData("", "", "");
 
-        
-    });
+            $("#btnSearch").click(function () {
+                FilterData();
+            });
 
-    function getData(txtSearch,startDate,endDate) {
-        $.ajax({
-            url: "<?php echo base_url('listFile/getData/search'); ?>",
-            type: "POST",
-            data: {
-                txtSearch: txtSearch,
-                startDate : startDate,
-                endDate : endDate
-            },
-            dataType: "json",
-            beforeSend: function() {
-                $("#idTbodyHistory").html(
-                    "<tr><td colspan='7' style='text-align:center;'>Loading...</td></tr>"
-                );
-            },
-            success: function(res) {
-                console.log(res)
-                if (res.trNya && res.trNya !== "") {
-                    $("#idTbodyHistory").html(res.trNya);
-                } else {
+            $("#txtSearch").keypress(function (e) {
+                if (e.which === 13) {
+                    getsearchOnEnter();
+                }
+            });
+
+
+
+        });
+
+        function getData(txtSearch, startDate, endDate) {
+            $.ajax({
+                url: "<?php echo base_url('listFile/getData/search'); ?>",
+                type: "POST",
+                data: {
+                    txtSearch: txtSearch,
+                    startDate: startDate,
+                    endDate: endDate
+                },
+                dataType: "json",
+                beforeSend: function () {
                     $("#idTbodyHistory").html(
-                        "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>"
+                        "<tr><td colspan='7' style='text-align:center;'>Loading...</td></tr>"
+                    );
+                },
+                success: function (res) {
+                    console.log(res)
+                    if (res.trNya && res.trNya !== "") {
+                        $("#idTbodyHistory").html(res.trNya);
+                    } else {
+                        $("#idTbodyHistory").html(
+                            "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>"
+                        );
+                    }
+                },
+                error: function () {
+                    $("#idTbodyHistory").html(
+                        "<tr><td colspan='7' style='text-align:center;color:red;'>Error loading data</td></tr>"
                     );
                 }
-            },
-            error: function() {
-                $("#idTbodyHistory").html(
-                    "<tr><td colspan='7' style='text-align:center;color:red;'>Error loading data</td></tr>"
-                );
-            }
-        });
-    }
-
-
-    function FilterData() {
-        var txtSearch = $("#txtSearch").val();
-        var startDate = $("#startDate").val();
-        var endDate = $("#endDate").val();
-        getData(txtSearch, startDate, endDate);
-    }
-
-
-    function getsearchOnEnter() {
-        var txtSearch = $("#txtSearch").val();
-        var startDate = $("#startDate").val();
-        var endDate = $("#endDate").val();
-        getData(txtSearch, startDate, endDate);
-    }
-
-    function resetFilters() {
-        tsVessel.clear();
-        tsVesselType.clear();
-        tsCategory.clear();
-
-        tsCategory.clearOptions();
-        tsCategory.addOption({ value: "", text: "Select Category" });
-        tsCategory.refreshOptions(false);
-
-        $("#tbodyFile").html(
-            '<tr><td colspan="6" class="text-center text-muted">Select vessel & type</td></tr>'
-        );
-    }
-
-    function loadCategories() {
-        var vessel = $(".slcVessel").val();
-        var vesselType = $(".slcVesselType").val();
-
-        if (!vessel || !vesselType) {
-            if (tsCategory) {
-                tsCategory.clearOptions();
-                tsCategory.addOption({ value: "", text: "Select Category" });
-                tsCategory.refreshOptions(false);
-            }
-            return;
+            });
         }
 
-        $.ajax({
-            url: "<?php echo base_url('listFile/getCategories'); ?>",
-            type: "GET",
-            dataType: "json",
-            data: {
-                vessel: vessel,
-                vesselType: vesselType
-            },
-            success: function(data) {
-                tsCategory.clearOptions();
-                tsCategory.addOption({ value: "", text: "Select Category" });
-                $.each(data, function(i, item) {
-                    tsCategory.addOption({ 
-                        value: item.value, 
-                        text: item.label 
+
+        function FilterData() {
+            var txtSearch = $("#txtSearch").val();
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            getData(txtSearch, startDate, endDate);
+        }
+
+
+        function getsearchOnEnter() {
+            var txtSearch = $("#txtSearch").val();
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            getData(txtSearch, startDate, endDate);
+        }
+
+        function resetFilters() {
+            tsVessel.clear();
+            tsVesselType.clear();
+            tsCategory.clear();
+
+            tsCategory.clearOptions();
+            tsCategory.addOption({
+                value: "",
+                text: "Select Category"
+            });
+            tsCategory.refreshOptions(false);
+
+            $("#tbodyFile").html(
+                '<tr><td colspan="6" class="text-center text-muted">Select vessel & type</td></tr>'
+            );
+        }
+
+        function loadCategories() {
+            var vessel = $(".slcVessel").val();
+            var vesselType = $(".slcVesselType").val();
+
+            if (!vessel || !vesselType) {
+                if (tsCategory) {
+                    tsCategory.clearOptions();
+                    tsCategory.addOption({
+                        value: "",
+                        text: "Select Category"
                     });
-                });
-
-                tsCategory.refreshOptions(false);
-            },
-            error: function() {
-                tsCategory.clearOptions();
-                tsCategory.addOption({ value: "", text: "-- Error loading categories --" });
-                tsCategory.refreshOptions(false);
+                    tsCategory.refreshOptions(false);
+                }
+                return;
             }
-        });
-    }
 
-    function loadFileData() {
-        var vessel = $(".slcVessel").val();
-        var vesselType = $(".slcVesselType").val();
-        var cat = $(".txtCategory").val();
+            $.ajax({
+                url: "<?php echo base_url('listFile/getCategories'); ?>",
+                type: "GET",
+                dataType: "json",
+                data: {
+                    vessel: vessel,
+                    vesselType: vesselType
+                },
+                success: function (data) {
+                    tsCategory.clearOptions();
+                    tsCategory.addOption({
+                        value: "",
+                        text: "Select Category"
+                    });
+                    $.each(data, function (i, item) {
+                        tsCategory.addOption({
+                            value: item.value,
+                            text: item.label
+                        });
+                    });
 
-        if (!vessel || !vesselType) {
-            return;
+                    tsCategory.refreshOptions(false);
+                },
+                error: function () {
+                    tsCategory.clearOptions();
+                    tsCategory.addOption({
+                        value: "",
+                        text: "-- Error loading categories --"
+                    });
+                    tsCategory.refreshOptions(false);
+                }
+            });
         }
 
-        $.ajax({
-            url: "<?php echo base_url('listFile/getFileData'); ?>",
-            type: "POST",
-            data: {
-                vessel: vessel,
-                vesselType: vesselType,
-                category: cat
-            },
-            beforeSend: function() {
-                $("#tbodyFile").html(
-                    '<tr><td colspan="6" class="text-center">Loading...</td></tr>');
-            },
-            success: function(res) {
-                $("#tbodyFile").html(res);
-            },
-            error: function() {
-                $("#tbodyFile").html(
-                    '<tr><td colspan="6" class="text-center">Error loading data</td></tr>');
-            }
-        });
-    }
+        function loadFileData() {
+            var vessel = $(".slcVessel").val();
+            var vesselType = $(".slcVesselType").val();
+            var cat = $(".txtCategory").val();
 
+            if (!vessel || !vesselType) {
+                return;
+            }
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/getFileData'); ?>",
+                type: "POST",
+                data: {
+                    vessel: vessel,
+                    vesselType: vesselType,
+                    category: cat
+                },
+                beforeSend: function () {
+                    $("#tbodyFile").html(
+                        '<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+                },
+                success: function (res) {
+                    $("#tbodyFile").html(res);
+                },
+                error: function () {
+                    $("#tbodyFile").html(
+                        '<tr><td colspan="6" class="text-center">Error loading data</td></tr>');
+                }
+            });
+        }
     </script>
 </head>
 
@@ -324,15 +335,13 @@
                                 <i class="fa fa-download" style="margin-right:6px;"></i>Download
                             </button>
                             <input type="text" id="txtSearch" style="border:1px solid #d1d5db; border-radius:30px; padding:8px 12px;
-                                font-size:14px; width:200px; "placeholder="Search...">
-                             <input type="date" id="startDate" 
-                                style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
+                                font-size:14px; width:200px; " placeholder="Search...">
+                            <input type="date" id="startDate" style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
                                 font-size:14px; width:150px;">
 
                             <span style="font-size:14px; color:#6b7280;">To</span>
 
-                            <input type="date" id="endDate"
-                                style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
+                            <input type="date" id="endDate" style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
                                 font-size:14px; width:150px;">
 
                             <button id="btnSearch"
@@ -345,39 +354,63 @@
 
                     <div style="padding:18px;">
                         <div style="overflow-x:auto; border-radius:8px; ">
-                            <table style="width:100%; border-collapse:collapse; font-family:'Inter','Segoe UI',sans-serif;x
-                                font-size:14px; color:white;">
+                            <table
+                                style="width:100%; border-collapse:collapse; border:1px solid white; font-family:'Inter','Segoe UI',sans-serif; font-size:14px; color:white;">
                                 <thead>
+                                    <!-- Baris 1: Header Utama -->
                                     <tr style="background-color:#7192AF; text-align:left;">
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            No</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Username</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Vessel</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            File Name</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Vessel Typec</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Old File</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            New File</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Category</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Remarks</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Download Time</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Upload Time</th>
+                                        <!-- Kolom dengan rowspan="2" untuk semua kecuali Approval -->
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">No</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Username</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Vessel</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Departement</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">File Name</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">New File</th>                         
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Category</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Remarks</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Upload Time</th>
+                                        <!-- <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Download Time</th> -->
+<!--                                    
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle; text-align:center;"
+                                            rowspan="2">Action</th> -->
+
+                                        <!-- Kolom Approval (TANPA rowspan, karena punya sub-header) -->
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px; font-weight:600; text-align:center;"
+                                            colspan="4">Approval</th>
+                                    </tr>
+
+                                    <!-- Baris 2: Sub-header untuk Approval -->
+                                    <tr style="background-color:#7192AF; text-align:center;">
+                                        <!-- 12 kolom kosong untuk kolom dengan rowspan="2" di atas -->
+                                        <td colspan="12" style="display:none;"></td>
+
+                                        <!-- Sub-kolom Approval -->
                                         <th
-                                            style="padding:12px 14px; border-bottom:2px solid  font-weight:600; text-align:center;">
-                                            Action</th>
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Master</th>
+                                        <th
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Os</th>
+                                        <th
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Deck</th>
+                                        <th
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Engine</th>
                                     </tr>
                                 </thead>
                                 <tbody id="idTbodyHistory">
-
+                                    <!-- Data akan diisi di sini -->
                                 </tbody>
                             </table>
                         </div>
@@ -407,7 +440,7 @@
                         <div style="display:flex; gap:20px; flex-wrap:wrap;">
                             <div style="flex:1; min-width:220px;">
                                 <label
-                                    style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Name 
+                                    style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Name
                                     Vessel</label>
                                 <select name="slcVessel" class="slcVessel" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;
                                     background:#f9fafb; font-size:14px;">

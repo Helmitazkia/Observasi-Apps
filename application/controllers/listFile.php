@@ -146,27 +146,57 @@ class ListFile extends CI_Controller{
 				$trNya .= "<td style='font-size:13px; text-align:center; color:#1f2937; padding:10px 12px; font-weight:500;'>".$no."</td>";
 				$trNya .= "<td style='font-size:13px; color:#111827; padding:10px 12px; font-weight:500;'>".$val->name_user."</td>";
 				$trNya .= "<td style='padding:10px;color:#333;'>".$val->vessel."</td>";
+				$trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->departement."</td>";
 				$trNya .= "<td style='font-size:13px; color:#2563eb; padding:10px 12px; font-weight:500;'>".$val->filename."</td>";
-				$trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->vesselType."</td>";
-				$trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$fileLinks."</td>";
+				// $trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->vesselType."</td>";
 				$trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$filenewLink."</td>";
-
+				
 				$badgeColor = "#dbeafe"; $textColor = "#1d4ed8";
 				if (stripos($val->category, 'Engine') !== false) { $badgeColor = "#dcfce7"; $textColor = "#166534"; }
 				else if (stripos($val->category, 'Deck') !== false) { $badgeColor = "#fef9c3"; $textColor = "#92400e"; }
 				else if (stripos($val->category, 'Other') !== false) { $badgeColor = "#f3f4f6"; $textColor = "#374151"; }
-
 				$trNya .= "<td style='font-size:12px; padding:10px 12px;'>
 								<span style=\"background:$badgeColor; color:$textColor; padding:4px 10px; border-radius:12px; font-weight:600; font-size:12px; display:inline-block; min-width:70px; text-align:center;\">
 									".$val->category."
 								</span>
 						</td>";
+				// $trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$fileLinks."</td>";
+			
+
+
 
 				$trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->remarks."</td>";  
-				$trNya .= "<td style='text-align:center; font-size:12px; color:#6b7280; padding:10px 12px;'>".$val->download_time."</td>";
+			
+				// $trNya .= "<td style='text-align:center; font-size:12px; color:#6b7280; padding:10px 12px;'>".$val->download_time."</td>";
 				$trNya .= "<td style='text-align:center; font-size:12px; color:#6b7280; padding:10px 12px;'>".$val->upload_time."</td>";
 
-				$trNya .= "<td style='text-align:center; padding:10px 12px;'>".$btnAct."</td>";
+				// $trNya .= "<td style='text-align:center; padding:10px 12px;'>".$btnAct."</td>";
+
+				// Kolom Approval - Master
+				$masterStatus = ($val->status_master == 'N') ? 
+					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
+					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
+				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$masterStatus."</td>";
+
+				// Kolom Approval - OS
+				$osStatus = ($val->status_os == 'N') ? 
+					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
+					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
+				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$osStatus."</td>";
+
+				// Kolom Approval - Deck
+				$deckStatus = ($val->status_deck == 'N') ? 
+					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
+					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
+				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$deckStatus."</td>";
+
+				// Kolom Approval - Engine
+				$engineStatus = ($val->status_engine == 'N') ? 
+					"<span style='color:green; font-weight:bold;'>✓ APPROVED</span>" : 
+					"<span style='color:red; font-weight:bold;'>× PENDING</span>";
+				$trNya .= "<td style='text-align:center; font-size:12px; padding:10px 8px;'>".$engineStatus."</td>";
+				
+
 
 				$trNya .= "</tr>";
 
@@ -335,7 +365,7 @@ class ListFile extends CI_Controller{
 							download
 							data-id='{$row->id}'
 							style='display:inline-block; background:#007bff; color:white; font-size:12px; padding:4px 10px; border-radius:4px; text-decoration:none;' 
-							class='btnSaveFile'>
+							class='#'>
 							<i class='fa fa-download'></i> Download
 						</a>
 
@@ -353,6 +383,7 @@ class ListFile extends CI_Controller{
 		$fullName = $this->session->userdata('fullName');
 		$userId   = $this->session->userdata('userId');
 		$dateNow  = date("Y-m-d H:i:s");
+		$departement = $this->input->post("departement", true);
 
 		if (!$idFile) {
 			echo json_encode(array("status" => "error", "message" => "idFile kosong"));
@@ -413,7 +444,8 @@ class ListFile extends CI_Controller{
 			$this->db->update("listFile", array(
 				"upload_time" => $dateNow,
 				"name_user"   => $fullName,
-				"file"        => $rawFileName
+				"file"        => $rawFileName,
+				"departement" => $departement // TAMBAH INI
 			));
 
 			print json_encode(array("status" => "success", "message" => "✅ Upload Success..!!"));
