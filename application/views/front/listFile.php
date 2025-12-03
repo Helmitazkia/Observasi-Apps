@@ -470,12 +470,191 @@
             });
         }
 
+        // function updateStatus(actionName, id_file) {
+        //     var formData = new FormData();
+        //     formData.append("slcFileNameUpload", id_file);
+        //     formData.append("action", actionName);
+
+        //     console.log("Updating status with data:", formData);
+
+        //     $.ajax({
+        //         url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+        //         type: "POST",
+        //         data: formData,
+        //         contentType: false,
+        //         processData: false,
+        //         dataType: "json",
+        //         success: function (res) {
+        //             console.log("Response:", res);
+        //             alert("Status updated!");
+        //             location.reload();
+        //         },
+        //         error: function (xhr) {
+        //             console.log(xhr.responseText);
+        //             alert("Error update status!");
+        //         }
+        //     });
+        // }
+
         function updateStatus(actionName, id_file) {
+            // If action is update-status-master, show special confirmation
+            if (actionName === 'update-status-master') {
+                Swal.fire({
+                    title: 'Master Approval Confirmation',
+                    text: "Are you sure you want to approve as MASTER?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, Approve',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // If confirmed, run update process
+                        processUpdateStatus(actionName, id_file);
+                    }
+                });
+            } else {
+                // For other actions, run directly without confirmation
+                showReviewModal(actionName, id_file);
+            }
+        }
+
+        // Function to show review modal
+        function showReviewModal(actionName, id_file) {
+            // Store data in global variables
+            window.currentReviewAction = null;
+            window.currentActionName = actionName;
+            window.currentFileId = id_file;
+
+            // Map action names to display names
+            var actionDisplayNames = {
+                'update-status-os': 'OS',
+                'update-status-deck': 'DECK',
+                'update-status-engine': 'ENGINE'
+            };
+
+            var reviewType = actionDisplayNames[actionName] || 'REVIEW';
+
+            // Set modal title and reset form
+            $('#review-modal-title').text(reviewType + ' Review');
+            $('#revisionRemarks').val('');
+            $('#revisionSection').hide();
+            $('#submitReviewBtn').hide();
+            $('#approveBtn').show();
+            $('#revisionBtn').show();
+            $('#labelsectionAction').show();
+
+            // Show modal
+            $('#revisi-modal').modal('show');
+        }
+
+        // Function when Approve button is clicked
+        function selectReviewAction(actionType, actionName, id_file) {
+            if (actionType === 'approve') {
+                // Directly process approval without remarks
+                $('#revisi-modal').modal('hide');
+                processUpdateStatus(actionName, id_file);
+            } else if (actionType === 'revision') {
+                // Show revision section
+                $('#revisionSection').show();
+                $('#labelsectionAction').hide();
+                $('#submitReviewBtn').show();
+                $('#approveBtn').hide();
+                $('#revisionBtn').hide();
+                window.currentReviewAction = 'revision';
+            }
+        }
+
+        // Function to submit review
+        function submitReview() {
+            var remarks = $('#revisionRemarks').val();
+            var actionName = window.currentActionName;
+            var id_file = window.currentFileId;
+
+            if (!remarks.trim()) {
+                Swal.fire({
+                    title: 'Warning!',
+                    text: 'Please enter revision remarks.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            // Process revision with remarks
+            $('#revisi-modal').modal('hide');
+            processRevisionStatus(actionName, id_file, remarks);
+        }
+
+        // Function to process revision status
+        function processRevisionStatus(actionName, id_file, remarks) {
+            var formData = new FormData();
+            formData.append("slcFileNameUpload", id_file);
+            formData.append("action", actionName);
+            formData.append("remaks_revisi", remarks);
+            formData.append("status_revisi", "Y"); // Add status indicator
+            formData.append("flagrevision", "X");
+
+            // console.log("Submitting revision with data:", formData);
+            // return false;
+            // Show loading
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Submitting revision...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: "json",
+                success: function (res) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Revision submitted successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function (xhr) {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to submit revision.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+
+
+        // Function for update status process
+        function processUpdateStatus(actionName, id_file) {
             var formData = new FormData();
             formData.append("slcFileNameUpload", id_file);
             formData.append("action", actionName);
 
             console.log("Updating status with data:", formData);
+
+            // Show loading Sweet Alert
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Updating status...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
             $.ajax({
                 url: "<?php echo base_url('listFile/saveToListFile'); ?>",
@@ -486,16 +665,28 @@
                 dataType: "json",
                 success: function (res) {
                     console.log("Response:", res);
-                    alert("Status updated!");
-                    location.reload();
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Status updated successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
                 },
                 error: function (xhr) {
                     console.log(xhr.responseText);
-                    alert("Error update status!");
+                    Swal.fire({
+                        title: 'Failed!',
+                        text: 'An error occurred while updating status.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
             });
         }
-
     </script>
 </head>
 
@@ -606,6 +797,8 @@
                                         <!-- Kolom Approval (TANPA rowspan, karena punya sub-header) -->
                                         <th style="padding:12px 14px; border:1px solid white; border-bottom:2px; font-weight:600; text-align:center;"
                                             colspan="4">Approval</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px; font-weight:600; text-align:center;"
+                                            colspan="4" rowspan="2">Status</th>
                                     </tr>
 
                                     <!-- Baris 2: Sub-header untuk Approval -->
@@ -804,7 +997,7 @@
                                     </select>
 
                                 </div>
-                                <input type="hidden" name="action" id="action" value="upload-file-update">
+                                <input type="hidden" name="action" id="action" value="upload-file-save">
                                 <div style="flex:1; min-width:220px;">
                                     <label
                                         style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
@@ -833,9 +1026,59 @@
                 </div>
                 <!-- end page Upload File Form SMS -->
 
+                
+
             </section>
         </main>
     </section>
 </body>
 
 </html>
+
+<!-- Modal HTML (Bootstrap 3) -->
+<div class="modal fade" id="revisi-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color:#7192AF;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" id="review-modal-title">REVIEW</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="control-label" id="labelsectionAction"><strong>Select Action</strong></label>
+                    <div class="row" style="margin-bottom:15px;">
+                        <div class="col-xs-6">
+                            <button type="button" id="approveBtn" 
+                                onclick="selectReviewAction('approve', window.currentActionName, window.currentFileId)"
+                                class="btn btn-success btn-block">
+                                Approve
+                            </button>
+                        </div>
+                        <div class="col-xs-6">
+                            <button type="button" id="revisionBtn"
+                                onclick="selectReviewAction('revision', window.currentActionName, window.currentFileId)"
+                                class="btn btn-warning btn-block">
+                                Revision Needed
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="revisionSection" style="display:none;">
+                        <label class="control-label"><strong>Revision Remarks</strong></label>
+                        <textarea id="revisionRemarks" 
+                            class="form-control" 
+                            rows="4"      
+                            placeholder="Enter revision notes here..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" id="submitReviewBtn" onclick="submitReview()" 
+                    class="btn btn-primary" style="display:none;">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
