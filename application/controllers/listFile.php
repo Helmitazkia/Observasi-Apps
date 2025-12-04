@@ -28,6 +28,8 @@ class ListFile extends CI_Controller{
 		$userId   = $this->session->userdata('userId');
 		$userType = strtolower($this->session->userdata('userType'));
 
+		
+
 		$txtSearch = $this->input->post('txtSearch', true);
 		$startDate = $this->input->post('startDate', true);
 		$endDate   = $this->input->post('endDate', true);
@@ -36,20 +38,66 @@ class ListFile extends CI_Controller{
 		$whereNya = " WHERE 1=1";
 
 		
-		if ($userType != 'admin') {
-			$idVesselLogin    = $this->session->userdata('idVesselLogin');
-			$vesselTypeLogin  = $this->session->userdata('vesselTypeLogin');
+		$idVesselLogin    = $this->session->userdata('idVesselLogin');
+		$vesselTypeLogin  = $this->session->userdata('vesselTypeLogin');
+		// $namevessel = "select name from mst_vessel where id = '".$idVesselLogin."'";
+		$idjabatan = $this->session->userdata('idJabatan');
+		$id_osVesselLogin = $this->session->userdata('os_vessel');
 
-			$whereNya .= " AND (
-				lf.user_id = '".$userId."'
-				OR mf.vessel = 'all'
-				OR mf.vesselType = 'all'
-				OR mf.vessel = '".$idVesselLogin."'
-				OR mf.vesselType = '".$vesselTypeLogin."'
-			)";
+
+		##$getnamevessel = $this->db->query("SELECT name FROM mst_vessel WHERE id = '".$idVesselLogin."'");
+
+		// var_dump($namevessel);exit;
+		
+		// ubah string "1,5" menjadi "'1','5'"
+		if ($idjabatan == "1"){
+			$ids = "'" . str_replace(",", "','", $idVesselLogin) . "'";
+		}else{
+			 $ids = "'" . str_replace(",", "','", $id_osVesselLogin) . "'";
+		}
+		// $ids = "'" . str_replace(",", "','", $id_osVesselLogin) . "'";
+
+		$sql = "SELECT name FROM mst_vessel WHERE id IN ($ids)";
+		$get_nameVessel_os = $this->db->query($sql)->result();
+
+		//var_dump($get_nameVessel_os); // Debugging line to check the output
+		if ($userType != 'admin') {
+
+			 // Jika OS punya multiple vessel
+			if (!empty($get_nameVessel_os)) {
+
+				$namaList = array();
+				foreach ($get_nameVessel_os as $v) {
+					$namaList[] = "'" . $v->name . "'";
+				}
+
+				// Buat string IN('A','B')
+				$namaStr = implode(",", $namaList);
+
+				// Filter berdasarkan vessel OS
+				$whereNya .= " AND mf.vessel IN ($namaStr)";	
+			}
+			// else{
+			// 		#DECK AND ENGINE JABATAN
+			// 		$whereNya .= " WHERE 1=1";
+			// 	}
+				// }else if($idjabatan =="998" || $idjabatan =="997"){
+				// 		$whereNya = " WHERE 1=1";
+				// 		var_dump("test where");
+				// }else{	
+				// 	if ($getnamevessel->num_rows() > 0) {
+				// 		$row = $getnamevessel->row();
+				// 		$namevessel = $row->name;
+				// 		$whereNya .= " AND mf.vessel = '".$namevessel."'";
+				// 	} 
+				// }
+			
+
+
 		}
 
-	
+		// var_dump($whereNya);exit; // Debugging line to check the output
+
 		if (!empty($txtSearch)) {
 
 			$whereNya .= " AND (
@@ -82,6 +130,7 @@ class ListFile extends CI_Controller{
 			$whereNya
 			ORDER BY mv.name ASC
 		";
+
 
 		$rsl = $this->observasi->getDataQuery($sql);
 
@@ -174,12 +223,16 @@ class ListFile extends CI_Controller{
 						{$val->remarks}
 					</div>";
 				}
-
 				if (!empty($val->remaks_revisi)) {
-					$allRemarks .= "<div style='background-color:#fff5f5; color:#c53030; padding:5px; margin:2px 0; border-radius:3px;'>
-						{$val->remaks_revisi}
-					</div>";
+					$formattedDate = date('d M Y H:i', strtotime($val->date_revisi));
+
+					$allRemarks .= "
+						<div style='background-color:#fff5f5; color:#c53030; padding:5px; margin:2px 0; border-radius:3px;'>
+							{$formattedDate} - {$val->remaks_revisi}
+						</div>
+					";
 				}
+
 
 				if (empty($allRemarks)) {
 					$allRemarks = "-";
@@ -193,15 +246,45 @@ class ListFile extends CI_Controller{
 				// $trNya .= "<td style='text-align:center; padding:10px 12px;'>".$btnAct."</td>";
 
 				
-				$masterStatus = ($val->status_master == "Y")
-					? "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_master)) . "</span>"
-					: "
-						<button onclick=\"updateStatus('update-status-master', '{$val->id_file}')\"
-							style='background:#00CC66; color:white; padding:5px 10px; border-radius:6px;
-							border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
-							APPROVE
-						</button>
-					";
+				// $masterStatus = ($val->status_master == "Y")
+				// 	? "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_master)) . "</span>"
+				// 	: "
+				// 		<button onclick=\"updateStatus('update-status-master', '{$val->id_file}')\"
+				// 			style='background:#00CC66; color:white; padding:5px 10px; border-radius:6px;
+				// 			border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
+				// 			APPROVE
+				// 		</button>
+				// 	";
+
+				// $trNya .= "
+				// 	<td style='text-align:center; font-size:12px; padding:10px 8px;'>
+				// 		{$masterStatus}
+				// 	</td>
+				// ";
+
+				if ($val->status_master == "Y") {
+
+					// Sudah approved → tampilkan tanggalnya
+					$masterStatus = "<span style='color:green; font-weight:bold;'>" 
+									. date('d M Y H:i', strtotime($val->date_master)) . 
+									"</span>";
+
+				} else {
+
+					if ($idjabatan == "1" || $userType == "admin") {
+						// Belum Y dan jabatan = 1 → tombol aktif
+						$masterStatus = "
+							<button onclick=\"updateStatus('update-status-master', '{$val->id_file}')\"
+								style='background:#00CC66; color:white; padding:5px 10px; border-radius:6px;
+								border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
+								APPROVE
+							</button>
+						";
+					} else {
+						// Belum Y dan jabatan ≠ 1 → tidak boleh approve → tampilkan span kosong
+						$masterStatus = "<span style='color:#999; font-size:12px; font-style:italic;'></span>";
+					}
+				}
 
 				$trNya .= "
 					<td style='text-align:center; font-size:12px; padding:10px 8px;'>
@@ -210,10 +293,12 @@ class ListFile extends CI_Controller{
 				";
 
 
+
+
 				if ($val->status_os == "Y") {
 					$osStatus = "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_os)) . "</span>";
 				} else {
-					if ($val->status_master == "Y") {
+					if ($val->status_master == "Y" && ($idjabatan == "999" || $userType == "admin")) {
 						$osStatus = "
 							<button onclick=\"updateStatus('update-status-os', '{$val->id_file}')\"
 								style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
@@ -249,7 +334,7 @@ class ListFile extends CI_Controller{
 						$deckStatus = "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_deck)) . "</span>";
 					} else {
 						// Cek status OS
-						if ($val->status_os == 'Y') {
+						if ($val->status_os == 'Y' && ($idjabatan == "998" || $userType == "admin")) {
 							// Jika OS sudah approved, tampilkan button REVIEW
 							$deckStatus = "
 								<button onclick=\"updateStatus('update-status-deck', '{$val->id_file}')\"
@@ -319,7 +404,7 @@ class ListFile extends CI_Controller{
 						$engineStatus = "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_engine)) . "</span>";
 					} else {
 						// Cek status OS
-						if ($val->status_os == 'Y') {
+						if ($val->status_os == 'Y' && ($idjabatan == "997" || $userType == "admin")) {
 							// Jika OS sudah approved, tampilkan button REVIEW
 							$engineStatus = "
 								<button onclick=\"updateStatus('update-status-engine', '{$val->id_file}')\"
@@ -345,7 +430,7 @@ class ListFile extends CI_Controller{
 				if ($val->status_data == "N") {
 
 					// Kosongkan (atau bisa kasih tanda - )
-					$deckStatus = "<span style='color:#blue; font-size:12px; font-style:italic;'>PROCESSED</span>";
+					$deckStatus = "<span style='color:#FFA500; font-size:12px; font-style:italic;'>PROCESSED</span>";
 
 				} else {
 
@@ -697,7 +782,8 @@ class ListFile extends CI_Controller{
 					"date_revisi"   => $dateNow,
 					"status_revisi" => $status_revisi, // R = Revision
 					"userid_revisi" => $userId,
-					"status_master"     => "N"  // Reset status OS ke N
+					"status_master"     => "N",
+					"status_data"   => "N"
 				
 				);
 				
@@ -729,7 +815,8 @@ class ListFile extends CI_Controller{
 					"date_revisi"   => $dateNow,
 					"status_revisi" => $status_revisi, // R = Revision
 					"userid_revisi" => $userId,
-					"status_os"     => "N"  // Reset status DECK ke N
+					"status_os"     => "N",
+					"status_data"   => "N"
 				);
 				
 				$this->db->where("id_file", $idFile);
@@ -757,7 +844,8 @@ class ListFile extends CI_Controller{
 					"date_revisi"   => $dateNow,
 					"status_revisi" => $status_revisi, // R = Revision
 					"userid_revisi" => $userId,
-					"status_os"     => "N"  // Reset status ENGINE ke N
+					"status_os"     => "N",
+					"status_data"   => "N"
 				);
 				
 				$this->db->where("id_file", $idFile);

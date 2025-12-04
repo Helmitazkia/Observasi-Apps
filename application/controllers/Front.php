@@ -565,6 +565,7 @@ class Front extends CI_Controller {
 			$this->session->set_userdata('idVesselLogin',$cekLogin[0]->vessel);
 			$this->session->set_userdata('stExport',$cekLogin[0]->export);
 			$this->session->set_userdata('idJabatan',$cekLogin[0]->id_jabatan);
+			$this->session->set_userdata('os_vessel',$cekLogin[0]->os_vessel);
 			$dataOut['status'] = true;
 		}
 		else
