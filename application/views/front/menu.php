@@ -67,16 +67,16 @@
                     </li>
                     <li>
                         <a id="idListFile" href="<?php echo base_url('listFile/'); ?>">
-                            <i class="glyphicon glyphicon-file"></i>
+                            <i class="glyphicon glyphicon-floppy-saved"></i>
                             <span>Vessel Form SMS</span>
                         </a>
                     </li>
-                    <li>
+                    <!-- <li>
                         <a id="idListFile" href="<?php echo base_url('officeForm/'); ?>">
                             <i class="glyphicon glyphicon-file"></i>
                             <span>Office Form SMS</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sub-menu">
                         <a href="javascript:;" id="idSetting">
                             <i class="fa fa-cogs"></i>
@@ -88,7 +88,7 @@
                           {
                         ?>
                         <ul class="sub">
-                            <li><a href="<?php echo base_url('setting/'); ?>">User</a></li>
+                            <li><a href="<?php echo base_url('setting/'); ?>"><i class="glyphicon glyphicon-user"></i>User</a></li>
                         </ul>
 
                         <?php 
@@ -101,22 +101,23 @@
                           {
                         ?>
                         <ul class="sub" style="display:none;">
-                            <li><a href="<?php echo base_url('masterForm/'); ?>">Master Vessel Form SMS</a></li>
+                             
+                            <li><a href="<?php echo base_url('masterForm/'); ?>"><i class="glyphicon glyphicon-share"></i>Master Vessel Form SMS</a></li>
                         </ul>
-                        <ul class="sub" style="display:none;">
+                        <!-- <ul class="sub" style="display:none;">
                             <li><a href="<?php echo base_url('masterForm/'); ?>">Master Office Form SMS</a></li>
-                        </ul>
+                        </ul> -->
                         <?php 
                           }
                         ?>
                         <ul class="sub">
-                            <li><a href="<?php echo base_url('setting/getChangePass'); ?>">Change Password</a>
+                            <li><a href="<?php echo base_url('setting/getChangePass'); ?>"><i class="glyphicon glyphicon-edit"></i>Change Password</a>
                             </li>
                         </ul>
                     </li>
                     <li>
                         <a class="logout" href="<?php echo base_url('front/logout'); ?>">
-                            <i class="fa fa-lock"></i>
+                            <i class="glyphicon glyphicon-log-out"></i>
                             <span>Logout</span>
                         </a>
                     </li>

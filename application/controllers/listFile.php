@@ -14,89 +14,69 @@ class ListFile extends CI_Controller{
     }
 
     function getData()
-	{
-	
+	{	
 	    $dataOut = array();
 		$trNya = "";
 		$no = 1;
-
-		
-		$dataOutVessel     = $this->getVessel();
-		$dataOutVesselType = $this->getVesselType();
-
 	
 		$userId   = $this->session->userdata('userId');
 		$userType = strtolower($this->session->userdata('userType'));
+		$idVesselLogin    = $this->session->userdata('idVesselLogin');
+		$idjabatan = $this->session->userdata('idJabatan');
+		$id_osVesselLogin = $this->session->userdata('os_vessel');
 
-		
+		$whereVsl = "";
 
 		$txtSearch = $this->input->post('txtSearch', true);
 		$startDate = $this->input->post('startDate', true);
 		$endDate   = $this->input->post('endDate', true);
 		$slcVessel = $this->input->post('slcVessel', true);
 
-		$whereNya = " WHERE 1=1";
-
+		$whereNya = " WHERE 1=1";		
 		
-		$idVesselLogin    = $this->session->userdata('idVesselLogin');
-		$vesselTypeLogin  = $this->session->userdata('vesselTypeLogin');
-		// $namevessel = "select name from mst_vessel where id = '".$idVesselLogin."'";
-		$idjabatan = $this->session->userdata('idJabatan');
-		$id_osVesselLogin = $this->session->userdata('os_vessel');
-
-
-		##$getnamevessel = $this->db->query("SELECT name FROM mst_vessel WHERE id = '".$idVesselLogin."'");
-
-		// var_dump($namevessel);exit;
-		
-		// ubah string "1,5" menjadi "'1','5'"
-		if ($idjabatan == "1"){
-			$ids = "'" . str_replace(",", "','", $idVesselLogin) . "'";
+		if($userType == "user")
+		{		
+			if ($idjabatan == "997" || $idjabatan == "998")
+			{
+				 $whereVsl = "";
+				 if ($idjabatan == "997")
+				 {
+					 $whereNya .= " AND lf.departement = 'ENGINE' ";
+				 }else{
+					 $whereNya .= " AND lf.departement = 'DECK' ";
+				 }
+				 
+			}
+			else if($idjabatan == "999")
+			{
+				$whereVsl = " WHERE id IN($id_osVesselLogin)";
+			}
+			else{
+				$whereVsl = " WHERE id IN($idVesselLogin)";
+			}
 		}else{
-			 $ids = "'" . str_replace(",", "','", $id_osVesselLogin) . "'";
+			$whereVsl = "";
 		}
-		// $ids = "'" . str_replace(",", "','", $id_osVesselLogin) . "'";
 
-		$sql = "SELECT name FROM mst_vessel WHERE id IN ($ids)";
+		$sql = "SELECT name FROM mst_vessel ".$whereVsl;
 		$get_nameVessel_os = $this->db->query($sql)->result();
 
-		//var_dump($get_nameVessel_os); // Debugging line to check the output
+
+
+
 		if ($userType != 'admin') {
 
-			 // Jika OS punya multiple vessel
 			if (!empty($get_nameVessel_os)) {
-
 				$namaList = array();
 				foreach ($get_nameVessel_os as $v) {
 					$namaList[] = "'" . $v->name . "'";
 				}
 
-				// Buat string IN('A','B')
 				$namaStr = implode(",", $namaList);
-
-				// Filter berdasarkan vessel OS
-				$whereNya .= " AND mf.vessel IN ($namaStr)";	
+				$whereNya .= " AND lf.vessel IN ($namaStr)";	
 			}
-			// else{
-			// 		#DECK AND ENGINE JABATAN
-			// 		$whereNya .= " WHERE 1=1";
-			// 	}
-				// }else if($idjabatan =="998" || $idjabatan =="997"){
-				// 		$whereNya = " WHERE 1=1";
-				// 		var_dump("test where");
-				// }else{	
-				// 	if ($getnamevessel->num_rows() > 0) {
-				// 		$row = $getnamevessel->row();
-				// 		$namevessel = $row->name;
-				// 		$whereNya .= " AND mf.vessel = '".$namevessel."'";
-				// 	} 
-				// }
-			
-
-
 		}
 
-		// var_dump($whereNya);exit; // Debugging line to check the output
 
 		if (!empty($txtSearch)) {
 
@@ -131,7 +111,7 @@ class ListFile extends CI_Controller{
 			ORDER BY mv.name ASC
 		";
 
-
+		// var_dump($sql);exit;
 		$rsl = $this->observasi->getDataQuery($sql);
 
 		if (count($rsl) > 0) { 
@@ -197,7 +177,6 @@ class ListFile extends CI_Controller{
 				$trNya .= "<td style='padding:10px;color:#333;'>".$val->vessel."</td>";
 				$trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->departement."</td>";
 				$trNya .= "<td style='font-size:13px; color:#2563eb; padding:10px 12px; font-weight:500;'>".$val->filename."</td>";
-				// $trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->vesselType."</td>";
 				$trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$filenewLink."</td>";
 				
 				$badgeColor = "#dbeafe"; $textColor = "#1d4ed8";
@@ -209,15 +188,8 @@ class ListFile extends CI_Controller{
 									".$val->category."
 								</span>
 						</td>";
-				// $trNya .= "<td style='font-size:13px; padding:10px 12px;'>".$fileLinks."</td>";
 			
-
-
-
-				// $trNya .= "<td style='font-size:13px; color:#4b5563; padding:10px 12px;'>".$val->remarks."</td>";  
-				// Gabungkan kedua remarks dengan pemisah <br>
 				$allRemarks = '';
-
 				if (!empty($val->remarks)) {
 					$allRemarks .= "<div style='background-color:#e6fffa; color:#065f46; padding:5px; margin:2px 0; border-radius:3px;'>
 						{$val->remarks}
@@ -239,49 +211,22 @@ class ListFile extends CI_Controller{
 				}
 
 				$trNya .= "<td style='font-size:13px; padding:10px 12px;'>{$allRemarks}</td>";
-			
-				// $trNya .= "<td style='text-align:center; font-size:12px; color:#6b7280; padding:10px 12px;'>".$val->download_time."</td>";
 				$trNya .= "<td style='text-align:center; font-size:12px; color:#4b5563; padding:10px 12px;'>". date('d M Y H:i', strtotime($val->upload_time)) ."</td>";
 
-				// $trNya .= "<td style='text-align:center; padding:10px 12px;'>".$btnAct."</td>";
-
-				
-				// $masterStatus = ($val->status_master == "Y")
-				// 	? "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_master)) . "</span>"
-				// 	: "
-				// 		<button onclick=\"updateStatus('update-status-master', '{$val->id_file}')\"
-				// 			style='background:#00CC66; color:white; padding:5px 10px; border-radius:6px;
-				// 			border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
-				// 			APPROVE
-				// 		</button>
-				// 	";
-
-				// $trNya .= "
-				// 	<td style='text-align:center; font-size:12px; padding:10px 8px;'>
-				// 		{$masterStatus}
-				// 	</td>
-				// ";
-
 				if ($val->status_master == "Y") {
-
-					// Sudah approved → tampilkan tanggalnya
 					$masterStatus = "<span style='color:green; font-weight:bold;'>" 
 									. date('d M Y H:i', strtotime($val->date_master)) . 
 									"</span>";
-
 				} else {
-
 					if ($idjabatan == "1" || $userType == "admin") {
-						// Belum Y dan jabatan = 1 → tombol aktif
 						$masterStatus = "
-							<button onclick=\"updateStatus('update-status-master', '{$val->id_file}')\"
+							<button onclick=\"updateStatus('update-status-master', '{$val->id}')\"
 								style='background:#00CC66; color:white; padding:5px 10px; border-radius:6px;
 								border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
 								APPROVE
 							</button>
 						";
 					} else {
-						// Belum Y dan jabatan ≠ 1 → tidak boleh approve → tampilkan span kosong
 						$masterStatus = "<span style='color:#999; font-size:12px; font-style:italic;'></span>";
 					}
 				}
@@ -292,15 +237,13 @@ class ListFile extends CI_Controller{
 					</td>
 				";
 
-
-
-
+				#status OS
 				if ($val->status_os == "Y") {
 					$osStatus = "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_os)) . "</span>";
 				} else {
 					if ($val->status_master == "Y" && ($idjabatan == "999" || $userType == "admin")) {
 						$osStatus = "
-							<button onclick=\"updateStatus('update-status-os', '{$val->id_file}')\"
+							<button onclick=\"updateStatus('update-status-os', '{$val->id}')\"
 								style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
 								border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
 								REVIEW
@@ -319,32 +262,22 @@ class ListFile extends CI_Controller{
 				";
 
 
-				// ==========================
-				// 3. DECK
-				// ==========================
-				// Jika departement ENGINE → tombol DECK tidak boleh tampil
+				#status Deck
 				if ($val->departement == "ENGINE") {
-
-					// Kosongkan (atau bisa kasih tanda - )
 					$deckStatus = "<span style='color:#999; font-size:12px; font-style:italic;'>-</span>";
-
 				} else {
-				// Kalau sudah punya status ENGINE → tampilkan tanggal/status
 					if ($val->status_deck == "Y") {
 						$deckStatus = "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_deck)) . "</span>";
 					} else {
-						// Cek status OS
 						if ($val->status_os == 'Y' && ($idjabatan == "998" || $userType == "admin")) {
-							// Jika OS sudah approved, tampilkan button REVIEW
 							$deckStatus = "
-								<button onclick=\"updateStatus('update-status-deck', '{$val->id_file}')\"
+								<button onclick=\"updateStatus('update-status-deck', '{$val->id}')\"
 									style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
 									border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
 									REVIEW
 								</button>
 							";
 						} else {
-							// Jika OS belum approved, tampilkan span kosong
 							$deckStatus = "<span style='color:#999; font-size:12px;'></span>";
 						}
 					}
@@ -357,64 +290,22 @@ class ListFile extends CI_Controller{
 				";
 
 
-				// // ==========================
-				// // 4. ENGINE
-				// // ==========================
-				// // Jika departement DECK → tombol ENGINE tidak boleh tampil
-				// 	if ($val->departement == "DECK") {
-				// 		// Kosongkan (atau bisa diganti simbol "-")
-				// 		$engineStatus = "<span style='color:#999; font-size:12px; font-style:italic;'>-</span>";
-
-				// 	} else {
-
-				// 		// Kalau sudah punya status ENGINE → tampilkan tanggal/status
-				// 		$engineStatus = ($val->status_engine == "Y")
-				// 		? "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_engine)) . "</span>"
-				// 		: "
-				// 			<button " . ($val->status_os == 'N' ? "disabled" : "") . "
-				// 				onclick=\"" . ($val->status_os= 'Y' ? "updateStatus('update-status-engine', '{$val->id_file}')" : "") . "\"
-				// 				style='background:" . ($val->status_os == 'N' ? "#CCCCCC" : "#0080FF") . "; 
-				// 					color:" . ($val->status_os == 'N' ? "#666666" : "white") . "; 
-				// 					padding:5px 10px; border-radius:6px;
-				// 					border:none; cursor:" . ($val->status_os == 'N' ? "not-allowed" : "pointer") . "; 
-				// 					font-size:11px; font-weight:bold;'>
-				// 				REVIEW
-				// 			</button>
-				// 		";
-				// 	}
-
-				// 	$trNya .= "
-				// 		<td style='text-align:center; font-size:12px; padding:10px 8px;'>
-				// 			{$engineStatus}
-				// 		</td>
-				// 	";
-
-				// ==========================
-				// 4. ENGINE
-				// ==========================
-				// Jika departement ENGINE → tombol DECK tidak boleh tampil
+				#status Engine
 				if ($val->departement == "DECK") {
-
-					// Kosongkan (atau bisa kasih tanda - )
 					$engineStatus = "<span style='color:#999; font-size:12px; font-style:italic;'>-</span>";
-
 				} else {
-				// Kalau sudah punya status ENGINE → tampilkan tanggal/status
 					if ($val->status_engine == "Y") {
 						$engineStatus = "<span style='color:green; font-weight:bold;'>" . date('d M Y H:i', strtotime($val->date_engine)) . "</span>";
 					} else {
-						// Cek status OS
 						if ($val->status_os == 'Y' && ($idjabatan == "997" || $userType == "admin")) {
-							// Jika OS sudah approved, tampilkan button REVIEW
 							$engineStatus = "
-								<button onclick=\"updateStatus('update-status-engine', '{$val->id_file}')\"
+								<button onclick=\"updateStatus('update-status-engine', '{$val->id}')\"
 									style='background:#0080FF; color:white; padding:5px 10px; border-radius:6px;
 									border:none; cursor:pointer; font-size:11px; font-weight:bold;'>
 									REVIEW
 								</button>
 							";
 						} else {
-							// Jika OS belum approved, tampilkan span kosong
 							$engineStatus = "<span style='color:#999; font-size:12px;'></span>";
 						}
 					}
@@ -426,29 +317,26 @@ class ListFile extends CI_Controller{
 					</td>
 				";
 
-				// Jika departement ENGINE → tombol DECK tidak boleh tampil
 				if ($val->status_data == "N") {
-
-					// Kosongkan (atau bisa kasih tanda - )
-					$deckStatus = "<span style='color:#FFA500; font-size:12px; font-style:italic;'>PROCESSED</span>";
-
+					$data_status = "<span style='color:#FFA500; font-size:12px; font-style:italic;'>PROCESSED</span>";
 				} else {
-
-					$deckStatus = "<span style='color:green; font-size:12px; font-weight:bold;'>COMPLETE</span>";
+					$data_status = "<span style='color:green; font-size:12px; font-weight:bold;'>COMPLETE</span>";
 				}
 
 				$trNya .= "
 					<td style='text-align:center; font-size:12px; padding:10px 8px;'>
-						{$deckStatus}
+						{$data_status}
 					</td>
 				";
 
 
 				$trNya .= "</tr>";
-
 				$no++;
 			}
 		}
+		
+		$dataOutVessel     = $this->getVessel();
+		$dataOutVesselType = $this->getVesselType();
 
 		$dataOut['trNya'] = $trNya;
 		$dataOut["vessel"] = $dataOutVessel;
@@ -467,8 +355,6 @@ class ListFile extends CI_Controller{
 	{
 		$dataOutVessel = "";
 		$dataVessel = $this->observasi->getDataAll("mst_vessel");
-
-		$dataOutVessel .= "<option value=\"\">-- Select vessel --</option>";
 		$dataOutVessel .= "<option value=\"All\">All</option>";
 
 		foreach ($dataVessel as $key => $value) 
@@ -488,23 +374,8 @@ class ListFile extends CI_Controller{
 		$sql = "SELECT DISTINCT category FROM mstfile WHERE deletests = 0";
 		$where = array();
 
-		if ($vesselInput == 'all' && $slcVesselType == 'all') {
-			$where[] = "(vessel = 'all' AND vesselType = 'all')";
-		} 
-		elseif ($vesselInput != 'all' && $slcVesselType == 'all') {
-			$where[] = "(vessel = " . $this->db->escape($vesselInput) . " OR vessel = 'all')";
-			$where[] = "(vesselType = 'all')";
-		} 
-		elseif ($vesselInput == 'all' && $slcVesselType != 'all') {
-			$where[] = "(vessel = 'all')";
-			$where[] = "(vesselType = " . $this->db->escape($slcVesselType) . " OR vesselType = 'all')";
-		} 
-		else {
-			
-			$where[] = "(vessel = " . $this->db->escape($vesselInput) . ")";
-			$where[] = "(vesselType = " . $this->db->escape($slcVesselType) . ")";
-		}
-
+		$where[] = "(vessel = " . $this->db->escape($vesselInput) . " OR vessel = 'all')";
+		
 		if (!empty($where)) {
 			$sql .= " AND " . implode(" AND ", $where);
 		}
@@ -532,14 +403,6 @@ class ListFile extends CI_Controller{
 
 		$sql   = "SELECT DISTINCT id,filename FROM mstfile WHERE deletests = 0";
 		$where = array();
-
-		if ($vessel !== 'all') {
-			$where[] = "LOWER(vessel) = " . $this->db->escape($vessel);
-		}
-
-		if ($vesselType !== 'all') {
-			$where[] = "LOWER(vesselType) = " . $this->db->escape($vesselType);
-		}
 
 		if (!empty($category)) {
 			$where[] = "LOWER(category) = " . $this->db->escape($category);
@@ -666,28 +529,20 @@ class ListFile extends CI_Controller{
 		}
 	}
 
-	function saveToListFile()
-	{
-		// $idFile   = $this->input->post("idFile", true); 
+
+    function insertUploadFileSMS()
+    {
 		$idFile   = $this->input->post("slcFileNameUpload", true);
 		$fullName = $this->session->userdata('fullName');
 		$userId   = $this->session->userdata('userId');
 		$dateNow  = date("Y-m-d H:i:s");
 		$departement = $this->input->post("slcDepartementUpload", true);
 		$action = $this->input->post("action", true);
-		// Cek jika ada flag revision
-		$flagRevision = $this->input->post('flagrevision', true);
-		$remaks_revisi = $this->input->post('remaks_revisi', true);
-		$status_revisi = $this->input->post('status_revisi', true); // R = Revision
-
-		// var_dump($flagRevision, $remaks_revisi, $status_revisi);exit;
-
-		if (!$idFile) {
-			echo json_encode(array("status" => "error", "message" => "idFile kosong"));
-			return;
-		}
+		$vessel =  $this->input->post("slcVesselUpload", true);
+		$vesselType =  $this->input->post("slcVesselTypeUpload", true);
 
 		$query = $this->observasi->getDataQuery("SELECT * FROM mstfile WHERE id = " . $this->db->escape($idFile));
+
 		if (!$query || count($query) == 0) {
 			echo json_encode(array("status" => "error", "message" => "data mstfile tidak ditemukan"));
 			return;
@@ -734,24 +589,56 @@ class ListFile extends CI_Controller{
 			$rawFileName = "uploads/masterListFile/" . $fileName;
 		}
 
+		$dataIns = array(
+			"id_file"       => $idFile,
+			"name_user"     => $fullName,
+			"user_id"       => $userId,
+			"vessel"        => $vessel,
+			"vesselType"    => $vesselType,
+			"category"      => $row->category,
+			"filename"      => $row->filename,
+			"file"          => $rawFileName,
+			"remarks"       => $row->remarks,
+			"departement" => $departement,
+			"upload_time"   => $dateNow
+		);
+
+		$this->db->insert("listFile", $dataIns);
+
+		print json_encode(array("status" => "success", "message" => "Submit Success.."));
+	}
+
+	
+
+
+	function saveToListFile()
+	{
+	
+		$idFile   = $this->input->post("slcFileNameUpload", true);
+		$fullName = $this->session->userdata('fullName');
+		$userId   = $this->session->userdata('userId');
+		$dateNow  = date("Y-m-d H:i:s");
+		$departement = $this->input->post("slcDepartementUpload", true);
+		$action = $this->input->post("action", true);
+		$flagRevision = $this->input->post('flagrevision', true);
+		$remaks_revisi = $this->input->post('remaks_revisi', true);
+		$status_revisi = $this->input->post('status_revisi', true); 
+
+		if (!$idFile) {
+			echo json_encode(array("status" => "error", "message" => "idFile kosong"));
+			return;
+		}
+
+		$query = $this->observasi->getDataQuery("SELECT * FROM listfile WHERE id = " . $this->db->escape($idFile));
+		if (!$query || count($query) == 0) {
+			echo json_encode(array("status" => "error", "message" => "data listfile tidak ditemukan"));
+			return;
+		}
+
 		$cek = $this->observasi->getDataQuery("SELECT * FROM listFile WHERE id_file = " . $this->db->escape($idFile) . " LIMIT 1");
 
-		if ($action == "upload-file-update" &&  $cek && count($cek) > 0) {
-			$this->db->where("id_file", $idFile);
-
-
-			$this->db->update("listFile", array(
-				"user_id"     => $userId,
-				"name_user"   => $fullName,
-				"upload_time" => $dateNow,
-				"file"        => $rawFileName,
-				"departement" => $departement 
-			));
-
-			print json_encode(array("status" => "success", "message" => "✅ Upload Success..!!"));
-		}
-		else if($action =="update-status-master" &&  $cek && count($cek) > 0) {
-			$this->db->where("id_file", $idFile);
+		if($action =="update-status-master") {
+			$this->db->where("id", $idFile);
 			$this->db->update("listFile", array(
 				"userid_master"  => $userId,
 				"date_master"    => $dateNow,
@@ -762,39 +649,25 @@ class ListFile extends CI_Controller{
 			));
 
 			print json_encode(array("status" => "success", "message" => " Success Approved Master !!"));
-		}
-		// else if ($action =="update-status-os" &&  $cek && count($cek) > 0) {
-		// 	$this->db->where("id_file", $idFile);
-		// 	$this->db->update("listFile", array(
-		// 		"userid_os"  => $userId,
-		// 		"date_os"    => $dateNow,
-		// 		"status_os"  => "Y"	
-		// 	));
-
-		// 	print json_encode(array("status" => "success", "message" => " Success Approved OS !!"));
-		// }
-
-		else if ($action == "update-status-os" && $cek && count($cek) > 0) {
+		}else if ($action == "update-status-os") {
 			if ($flagRevision == "X") {
-				// Jika revision requested
 				$updateData = array(
 					"remaks_revisi" => $remaks_revisi,
 					"date_revisi"   => $dateNow,
-					"status_revisi" => $status_revisi, // R = Revision
+					"status_revisi" => $status_revisi,
 					"userid_revisi" => $userId,
 					"status_master"     => "N",
 					"status_data"   => "N"
 				
 				);
 				
-				$this->db->where("id_file", $idFile);
+				$this->db->where("id", $idFile);
 				$this->db->update("listFile", $updateData);
 				
 				print json_encode(array("status" => "success", "message" => "OS Revision requested!"));
 				
 			} else {
-				// Jika approve normal
-				$this->db->where("id_file", $idFile);
+				$this->db->where("id", $idFile);
 				$this->db->update("listFile", array(
 					"userid_os"  => $userId,
 					"date_os"    => $dateNow,
@@ -806,27 +679,24 @@ class ListFile extends CI_Controller{
 				
 				print json_encode(array("status" => "success", "message" => "Success Approved OS !!"));
 			}
-		}else if ($action =="update-status-deck" &&  $cek && count($cek) > 0) {
-			
+		}else if ($action =="update-status-deck") {
 			if ($flagRevision == "X") {
-				// Jika revision requested
 				$updateData = array(
 					"remaks_revisi" => $remaks_revisi,
 					"date_revisi"   => $dateNow,
-					"status_revisi" => $status_revisi, // R = Revision
+					"status_revisi" => $status_revisi, 
 					"userid_revisi" => $userId,
 					"status_os"     => "N",
 					"status_data"   => "N"
 				);
 				
-				$this->db->where("id_file", $idFile);
+				$this->db->where("id", $idFile);
 				$this->db->update("listFile", $updateData);
 				
 				print json_encode(array("status" => "success", "message" => "DECK Revision requested!"));
 				
 			} else {
-				// Jika approve normal
-				$this->db->where("id_file", $idFile);
+				$this->db->where("id", $idFile);
 				$this->db->update("listFile", array(
 					"userid_deck"  => $userId,
 					"date_deck"    => $dateNow,
@@ -836,76 +706,39 @@ class ListFile extends CI_Controller{
 				
 				print json_encode(array("status" => "success", "message" => " Success Review Deck !!"));
 			}
-		}else if ($action =="update-status-engine" &&  $cek && count($cek) > 0) {
+		}else if ($action =="update-status-engine") {
 			if ($flagRevision == "X") {
-				// Jika revision requested
 				$updateData = array(
 					"remaks_revisi" => $remaks_revisi,
 					"date_revisi"   => $dateNow,
-					"status_revisi" => $status_revisi, // R = Revision
+					"status_revisi" => $status_revisi,
 					"userid_revisi" => $userId,
 					"status_os"     => "N",
 					"status_data"   => "N"
 				);
 				
-				$this->db->where("id_file", $idFile);
+				$this->db->where("id", $idFile);
 				$this->db->update("listFile", $updateData);
-				
+		
 				print json_encode(array("status" => "success", "message" => "ENGINE Revision requested!"));
 				
 			} else {
-				// Jika approve normal
-				$this->db->where("id_file", $idFile);
+				$this->db->where("id", $idFile);
 				$this->db->update("listFile", array(
 					"userid_engine"  => $userId,
 					"date_engine"    => $dateNow,
 					"status_engine"  => "Y",
 					"status_data" =>"Y"
-				));
-				
+				));				
 				print json_encode(array("status" => "success", "message" => " Success Review Engine !!"));
 			}
-		}
-		
-		// else if ($action =="update-status-engine" &&  $cek && count($cek) > 0) {
-		// 	$this->db->where("id_file", $idFile);
-		// 	$this->db->update("listFile", array(
-		// 		"userid_engine"  => $userId,
-		// 		"date_engine"    => $dateNow,
-		// 		"status_engine"  => "Y"
-		// 	));
-
-		// 	print json_encode(array("status" => "success", "message" => " Success Review Engine !!"));
-		// }
-		
-		else {
-			#insert new record
-			$dataIns = array(
-				"id_file"       => $idFile,
-				"name_user"     => $fullName,
-				"user_id"       => $userId,
-				"vessel"        => $row->vessel,
-				"vesselType"    => $row->vesselType,
-				"category"      => $row->category,
-				"filename"      => $row->filename,
-				"file"          => $rawFileName,
-				"remarks"       => $row->remarks,
-				"departement" => $departement,
-				"upload_time"   => $dateNow
-			);
-
-			$this->db->insert("listFile", $dataIns);
-
-			print json_encode(array("status" => "success", "message" => "✅ Download Success..!!"));
-		}
-
-		
+		}		
 	}
 
 	function getVesselType($return = "")
     {
-        $opt = "<option value=''>Select Vessel Type</option>"; 
-        $opt .= "<option value='all'>All</option>"; 
+       
+        $opt = "<option value='all'>All</option>"; 
         $whereNya = "Deletests = '0' 
                     AND DefType IN ('Bulk Carrier', 'OIL TANKER', 'CHEMICAL TANKER', 'FLOATING CRANE', 'TUG BOAT')";
 

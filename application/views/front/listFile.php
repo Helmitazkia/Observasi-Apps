@@ -154,22 +154,9 @@
         $(document).ready(function () {
             $("#formUploadSMS").on("submit", function (e) {
                 e.preventDefault();
-
-
-
                 var formData = new FormData(this);
-                console.log("Form Data prepared:", formData);
-                // var fileUpload = $("#fileUpload")[0].files[0];
-                // console.log("File selected:", fileUpload);
-
-                // // Kalau mau re-append file (opsional, tidak wajib)
-                // formData.append("fileUpload", fileUpload);
-                // console.log(formData,fileUpload);
-
-                // return false;
-
                 $.ajax({
-                    url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+                    url: "<?php echo base_url('listFile/insertUploadFileSMS'); ?>",
                     type: "POST",
                     data: formData,
                     dataType: "json",
@@ -183,7 +170,6 @@
 
                         if (res.status === "success") {
                             alert(res.message);
-                            //     $("#modalUploadFile").modal("hide");
                             location.reload();
                         } else {
                             alert(res.message || "Terjadi kesalahan.");
@@ -194,10 +180,6 @@
                         console.error("Upload error:", error);
                         alert("Error uploading file, please try again!");
                     }
-                    // ,
-                    // complete: function () {
-                    //     $("#btnUpload").prop("disabled", false).text("Upload");
-                    // }
                 });
             });
         });
@@ -437,8 +419,6 @@
                 type: "POST",
                 dataType: "json",
                 data: {
-                    vessel: slcVesselUpload,
-                    vesselType: slcVesselTypeUpload,
                     category: tsCategoryUpload
                 },
                 success: function (data) {
@@ -470,34 +450,7 @@
             });
         }
 
-        // function updateStatus(actionName, id_file) {
-        //     var formData = new FormData();
-        //     formData.append("slcFileNameUpload", id_file);
-        //     formData.append("action", actionName);
-
-        //     console.log("Updating status with data:", formData);
-
-        //     $.ajax({
-        //         url: "<?php echo base_url('listFile/saveToListFile'); ?>",
-        //         type: "POST",
-        //         data: formData,
-        //         contentType: false,
-        //         processData: false,
-        //         dataType: "json",
-        //         success: function (res) {
-        //             console.log("Response:", res);
-        //             alert("Status updated!");
-        //             location.reload();
-        //         },
-        //         error: function (xhr) {
-        //             console.log(xhr.responseText);
-        //             alert("Error update status!");
-        //         }
-        //     });
-        // }
-
         function updateStatus(actionName, id_file) {
-            // If action is update-status-master, show special confirmation
             if (actionName === 'update-status-master') {
                 Swal.fire({
                     title: 'Master Approval Confirmation',
@@ -511,24 +464,20 @@
                     reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // If confirmed, run update process
                         processUpdateStatus(actionName, id_file);
+                        return false;
                     }
                 });
             } else {
-                // For other actions, run directly without confirmation
                 showReviewModal(actionName, id_file);
             }
         }
 
-        // Function to show review modal
         function showReviewModal(actionName, id_file) {
-            // Store data in global variables
             window.currentReviewAction = null;
             window.currentActionName = actionName;
             window.currentFileId = id_file;
 
-            // Map action names to display names
             var actionDisplayNames = {
                 'update-status-os': 'OS',
                 'update-status-deck': 'DECK',
@@ -537,7 +486,7 @@
 
             var reviewType = actionDisplayNames[actionName] || 'REVIEW';
 
-            // Set modal title and reset form
+
             $('#review-modal-title').text(reviewType + ' Review');
             $('#revisionRemarks').val('');
             $('#revisionSection').hide();
@@ -550,14 +499,11 @@
             $('#revisi-modal').modal('show');
         }
 
-        // Function when Approve button is clicked
         function selectReviewAction(actionType, actionName, id_file) {
             if (actionType === 'approve') {
-                // Directly process approval without remarks
                 $('#revisi-modal').modal('hide');
                 processUpdateStatus(actionName, id_file);
             } else if (actionType === 'revision') {
-                // Show revision section
                 $('#revisionSection').show();
                 $('#labelsectionAction').hide();
                 $('#submitReviewBtn').show();
@@ -567,7 +513,7 @@
             }
         }
 
-        // Function to submit review
+
         function submitReview() {
             var remarks = $('#revisionRemarks').val();
             var actionName = window.currentActionName;
@@ -583,23 +529,18 @@
                 return;
             }
 
-            // Process revision with remarks
             $('#revisi-modal').modal('hide');
             processRevisionStatus(actionName, id_file, remarks);
         }
 
-        // Function to process revision status
         function processRevisionStatus(actionName, id_file, remarks) {
             var formData = new FormData();
             formData.append("slcFileNameUpload", id_file);
             formData.append("action", actionName);
             formData.append("remaks_revisi", remarks);
-            formData.append("status_revisi", "Y"); // Add status indicator
+            formData.append("status_revisi", "Y");
             formData.append("flagrevision", "X");
 
-            // console.log("Submitting revision with data:", formData);
-            // return false;
-            // Show loading
             Swal.fire({
                 title: 'Processing...',
                 text: 'Submitting revision...',
@@ -638,15 +579,11 @@
         }
 
 
-        // Function for update status process
         function processUpdateStatus(actionName, id_file) {
             var formData = new FormData();
             formData.append("slcFileNameUpload", id_file);
             formData.append("action", actionName);
 
-            console.log("Updating status with data:", formData);
-
-            // Show loading Sweet Alert
             Swal.fire({
                 title: 'Processing...',
                 text: 'Updating status...',
@@ -673,6 +610,7 @@
                         timer: 2000,
                         timerProgressBar: true
                     }).then(() => {
+                        //return false;
                         location.reload();
                     });
                 },
@@ -691,8 +629,11 @@
 </head>
 
 <body style="background:#f5f7fa;font-family:'Segoe UI',Tahoma,sans-serif;">
-    <section id="container" style="position:relative;">
-        <div id="idLoadingSpinner" style="
+    <section id="container">
+        <section id="main-content">
+            <section class="wrapper site-min-height"
+                style="min-height:400px; font-family:'Segoe UI', Tahoma, sans-serif; background:#f9fafb; padding:28px;">
+                <div id="idLoadingSpinner" style="
                     display:none;
                     position:fixed;
                     top:0; left:0;
@@ -704,22 +645,19 @@
                     flex-direction:column;
                     ">
 
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 50 50"
-                style="margin:auto; background:none; display:block;">
-                <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"
-                    stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
-                    <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s"
-                        repeatCount="indefinite" />
-                </circle>
-            </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 50 50"
+                        style="margin:auto; background:none; display:block;">
+                        <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="5"
+                            stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+                            <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25"
+                                dur="1s" repeatCount="indefinite" />
+                        </circle>
+                    </svg>
 
-            <p style="margin-top:20px; font-size:16px; color:#fff; font-weight:bold; text-align:center;">
-                ⏳ Please wait... Processing data
-            </p>
-        </div>
-        <main id="main-content" class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
-            <section class="wrapper site-min-height"
-                style="min-height:400px; background:#f9fafb; padding:28px; position:relative;">
+                    <p style="margin-top:20px; font-size:16px; color:#fff; font-weight:bold; text-align:center;">
+                        ⏳ Please wait... Processing data
+                    </p>
+                </div>
 
                 <div id="mainContentDataTable"
                     style="border:1px solid  border-radius:10px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:28px; overflow:hidden;">
@@ -767,9 +705,9 @@
                             <table
                                 style="width:100%; border-collapse:collapse; border:1px solid white; font-family:'Inter','Segoe UI',sans-serif; font-size:14px; color:white;">
                                 <thead>
-                                    <!-- Baris 1: Header Utama -->
+
                                     <tr style="background-color:#7192AF; text-align:left;">
-                                        <!-- Kolom dengan rowspan="2" untuk semua kecuali Approval -->
+
                                         <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
                                             rowspan="2">No</th>
                                         <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
@@ -788,25 +726,18 @@
                                             rowspan="2">Remarks</th>
                                         <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
                                             rowspan="2">Upload Time</th>
-                                        <!-- <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
-                                            rowspan="2">Download Time</th> -->
-                                        <!--                                    
-                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle; text-align:center;"
-                                            rowspan="2">Action</th> -->
 
-                                        <!-- Kolom Approval (TANPA rowspan, karena punya sub-header) -->
                                         <th style="padding:12px 14px; border:1px solid white; border-bottom:2px; font-weight:600; text-align:center;"
                                             colspan="4">Approval</th>
-                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px; font-weight:600; text-align:center;"
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; text-align:center;"
                                             colspan="4" rowspan="2">Status</th>
                                     </tr>
 
-                                    <!-- Baris 2: Sub-header untuk Approval -->
+
                                     <tr style="background-color:#7192AF; text-align:center;">
-                                        <!-- 12 kolom kosong untuk kolom dengan rowspan="2" di atas -->
+
                                         <td colspan="12" style="display:none;"></td>
 
-                                        <!-- Sub-kolom Approval -->
                                         <th
                                             style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
                                             Master</th>
@@ -1026,10 +957,11 @@
                 </div>
                 <!-- end page Upload File Form SMS -->
 
-                
+
 
             </section>
-        </main>
+        </section>
+
     </section>
 </body>
 
@@ -1048,7 +980,7 @@
                     <label class="control-label" id="labelsectionAction"><strong>Select Action</strong></label>
                     <div class="row" style="margin-bottom:15px;">
                         <div class="col-xs-6">
-                            <button type="button" id="approveBtn" 
+                            <button type="button" id="approveBtn"
                                 onclick="selectReviewAction('approve', window.currentActionName, window.currentFileId)"
                                 class="btn btn-success btn-block">
                                 Approve
@@ -1062,20 +994,18 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div id="revisionSection" style="display:none;">
                         <label class="control-label"><strong>Revision Remarks</strong></label>
-                        <textarea id="revisionRemarks" 
-                            class="form-control" 
-                            rows="4"      
+                        <textarea id="revisionRemarks" class="form-control" rows="4"
                             placeholder="Enter revision notes here..."></textarea>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" id="submitReviewBtn" onclick="submitReview()" 
-                    class="btn btn-primary" style="display:none;">
+                <button type="button" id="submitReviewBtn" onclick="submitReview()" class="btn btn-primary"
+                    style="display:none;">
                     Submit
                 </button>
             </div>
