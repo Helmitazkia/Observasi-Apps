@@ -5,279 +5,635 @@
 
 <head>
     <script type="text/javascript">
-    $(document).ready(function() {
-        $("#btnAdd").click(function() {
-            $("#mainContentDataTable").fadeOut(300, function() {
-                $("#mainContentDownloadFile").fadeIn(300);
+        $(document).ready(function () {
+            $("#btnAdd").click(function () {
+                $("#mainContentDataTable").fadeOut(300, function () {
+                    $("#mainContentDownloadFile").fadeIn(300);
+                });
+            });
+
+            $("#btnCancelUpload").click(function () {
+                $("#mainContentDownloadFile").fadeOut(300, function () {
+                    $("#mainContentDataTable").fadeIn(300);
+                });
+            });
+
+
+            $("#btn-form-upload").click(function () {
+                $("#mainContentDataTable").fadeOut(300, function () {
+                    $("#content-file-upload").fadeIn(300);
+                });
+            });
+
+            $
+
+                ("#btn-form-cancel-upload").click(function () {
+                    $("#content-file-upload").fadeOut(300, function () {
+                        $("#mainContentDataTable").fadeIn(300);
+                    });
+                });
+        });
+
+
+
+        var tsVessel;
+        var tsVesselType;
+        var tsCategory;
+        var tsVesselUpload;
+        var tsVesselTypeUpload;
+        var tsCategoryUpload;
+        var slcDepartementUpload
+        var slcFileNameUpload
+
+        $(document).ready(function () {
+
+            tsVessel = new TomSelect(".slcVessel", {
+                create: false,
+                searchField: ["text"]
+            });
+
+            tsVesselType = new TomSelect(".slcVesselType", {
+                create: false,
+                searchField: ["text"]
+            });
+
+            tsCategory = new TomSelect(".txtCategory", {
+                create: false,
+                allowEmptyOption: true,
+                placeholder: "Select Category"
+            });
+
+            tsVesselUpload = new TomSelect(".slcVesselUpload", {
+                create: false,
+                searchField: ["text"]
+            });
+
+            tsVesselTypeUpload = new TomSelect(".slcVesselTypeUpload", {
+                create: false,
+                searchField: ["text"]
+            });
+
+            tsCategoryUpload = new TomSelect(".txtCategoryUpload", {
+                create: false,
+                allowEmptyOption: true,
+                placeholder: "Select Category"
+            });
+
+            slcDepartementUpload = new TomSelect(".slcDepartementUpload", {
+                create: false,
+                searchField: ["text"]
+            });
+            slcFileNameUpload = new TomSelect(".slcFileNameUpload", {
+                create: false,
+                allowEmptyOption: true,
+                placeholder: "Select Option File Name"
+            });
+
+            $(document).on("change", ".slcVessel, .slcVesselType", function () {
+                loadCategories();
+            });
+
+            $(document).on("change", ".slcVesselUpload, .slcVesselTypeUpload", function () {
+                $(".txtCategoryUpload").each(function () {
+                    if (this.selectize) {
+                        this.selectize.destroy();
+                    }
+                });
+                loadCategoriesUpload();
+            });
+
+            $(document).on("change", ".txtCategory", function () {
+                loadFileData();
+
+            });
+
+            $(document).on("change", ".txtCategoryUpload", function () {
+                $(".slcFileNameUpload").each(function () {
+                    if (this.selectize) {
+                        this.selectize.destroy();
+                    }
+                });
+                loadfilenameOption();
+
+            });
+
+
+
+
+
+        });
+
+
+        $(document).on("click", ".btnSaveFile", function (e) {
+            var fileId = $(this).data("id");
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    idFile: fileId
+                },
+                success: function (res) {
+                    alert(res.message);
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    console.log("Error:", error);
+                    console.log(xhr.responseText);
+                }
+            });
+
+        });
+
+        function openUploadModal(id) {
+            $("#idFile").val(id);
+            $("#modalUploadFile").modal("show");
+        }
+
+        $(document).ready(function () {
+            $("#formUploadSMS").on("submit", function (e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: "<?php echo base_url('listFile/insertUploadFileSMS'); ?>",
+                    type: "POST",
+                    data: formData,
+                    dataType: "json",
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function () {
+                        $("#idLoadingSpinner").fadeIn(200);
+                    },
+                    success: function (res) {
+                        $("#idLoadingSpinner").fadeOut(200);
+
+                        if (res.status === "success") {
+                            alert(res.message);
+                            location.reload();
+                        } else {
+                            alert(res.message || "Terjadi kesalahan.");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $("#idLoadingSpinner").fadeOut(200);
+                        console.error("Upload error:", error);
+                        alert("Error uploading file, please try again!");
+                    }
+                });
             });
         });
 
-        $("#btnCancelUpload").click(function() {
-            $("#mainContentDownloadFile").fadeOut(300, function() {
-                $("#mainContentDataTable").fadeIn(300);
+        $(document).ready(function () {
+            getData("", "", "");
+
+            $("#btnSearch").click(function () {
+                FilterData();
             });
-        });
-    });
 
+            $("#txtSearch").keypress(function (e) {
+                if (e.which === 13) {
+                    getsearchOnEnter();
+                }
+            });
 
-
-    var tsVessel;
-    var tsVesselType;
-    var tsCategory;
-
-
-    $(document).ready(function() {
-        
-       tsVessel = new TomSelect(".slcVessel",{
-            create: false,
-            searchField: ["text"]
         });
 
-        tsVesselType = new TomSelect(".slcVesselType",{
-            create: false,
-            searchField: ["text"]
-        });
+        function getData(txtSearch, startDate, endDate) {
+            $.ajax({
+                url: "<?php echo base_url('listFile/getData/search'); ?>",
+                type: "POST",
+                data: {
+                    txtSearch: txtSearch,
+                    startDate: startDate,
+                    endDate: endDate
+                },
+                dataType: "json",
+                beforeSend: function () {
+                    $("#idTbodyHistory").html(
+                        "<tr><td colspan='7' style='text-align:center;'>Loading...</td></tr>"
+                    );
+                },
+                success: function (res) {
+                    // console.log(res)
+                    if (res.trNya && res.trNya !== "") {
+                        $("#idTbodyHistory").html(res.trNya);
+                    } else {
+                        $("#idTbodyHistory").html(
+                            "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>"
+                        );
+                    }
+                },
+                error: function () {
+                    $("#idTbodyHistory").html(
+                        "<tr><td colspan='7' style='text-align:center;color:red;'>Error loading data</td></tr>"
+                    );
+                }
+            });
+        }
 
-        tsCategory = new TomSelect(".txtCategory", {
-            create: false,
-            allowEmptyOption: true,
-            placeholder: "Select Category"
-        });
 
-        $(document).on("change", ".slcVessel, .slcVesselType", function() {
-            loadCategories();
-        });
-
-        $(document).on("change", ".txtCategory", function() {
-            loadFileData();
-        });
-    });
+        function FilterData() {
+            var txtSearch = $("#txtSearch").val();
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            getData(txtSearch, startDate, endDate);
+        }
 
 
-    $(document).on("click", ".btnSaveFile", function(e) {
-        var fileId = $(this).data("id");
+        function getsearchOnEnter() {
+            var txtSearch = $("#txtSearch").val();
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            getData(txtSearch, startDate, endDate);
+        }
 
-        $.ajax({
-            url: "<?php echo base_url('listFile/saveToListFile'); ?>",
-            type: "POST",
-            dataType: "json",
-            data: {
-                idFile: fileId
-            },
-            success: function(res) {
-                alert(res.message);
-                location.reload();
-            },
-            error: function(xhr, status, error) {
-                console.log("Error:", error);
-                console.log(xhr.responseText);
+        function resetFilters() {
+            tsVessel.clear();
+            tsVesselType.clear();
+            tsCategory.clear();
+
+            tsCategory.clearOptions();
+            tsCategory.addOption({
+                value: "",
+                text: "Select Category"
+            });
+            tsCategory.refreshOptions(false);
+
+            $("#tbodyFile").html(
+                '<tr><td colspan="6" class="text-center text-muted">Select vessel & type</td></tr>'
+            );
+        }
+
+        function loadCategories() {
+            var vessel = $(".slcVessel").val();
+            var vesselType = $(".slcVesselType").val();
+
+            if (!vessel || !vesselType) {
+
+                tsCategory.clearOptions();
+                tsCategory.addOption({
+                    value: "",
+                    text: "Select Category"
+                });
+                tsCategory.refreshOptions(false);
+
+                return;
             }
-        });
 
-    });
+            $.ajax({
+                url: "<?php echo base_url('listFile/getCategories'); ?>",
+                type: "GET",
+                dataType: "json",
+                data: {
+                    vessel: vessel,
+                    vesselType: vesselType
+                },
+                success: function (data) {
+                    console.log("categories data:", data);
+                    tsCategory.clearOptions();
+                    tsCategory.addOption({
+                        value: "",
+                        text: "Select Category"
+                    });
+                    $.each(data, function (i, item) {
+                        tsCategory.addOption({
+                            value: item.value,
+                            text: item.label
+                        });
+                    });
 
-    function openUploadModal(id) {
-        $("#idFile").val(id);
-        $("#modalUploadFile").modal("show");
-    }
+                    tsCategory.refreshOptions(false);
+                },
+                error: function () {
+                    tsCategory.clearOptions();
+                    tsCategory.addOption({
+                        value: "",
+                        text: "-- Error loading categories --"
+                    });
+                    tsCategory.refreshOptions(false);
+                }
+            });
+        }
 
-    $(document).ready(function() {
-        $("#formUploadFile").on("submit", function(e) {
-            e.preventDefault();
+        function loadCategoriesUpload() {
+            var slcVesselUpload = $(".slcVesselUpload").val();
+            var slcVesselTypeUpload = $(".slcVesselTypeUpload").val();
 
-            var formData = new FormData(this);
+            if (!slcVesselUpload || !slcVesselTypeUpload) {
+                tsCategoryUpload.clearOptions();
+                tsCategoryUpload.addOption({
+                    value: "",
+                    text: "Select Category"
+                });
+                tsCategoryUpload.refreshOptions(false);
+                tsCategoryUpload.setValue("");
+
+                return;
+            }
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/getCategories'); ?>",
+                type: "GET",
+                dataType: "json",
+                data: {
+                    vessel: slcVesselUpload,
+                    vesselType: slcVesselTypeUpload
+                },
+                success: function (data) {
+                    tsCategoryUpload.clearOptions();
+                    tsCategoryUpload.addOption({
+                        value: "",
+                        text: "Select Category"
+                    });
+                    $.each(data, function (i, item) {
+                        tsCategoryUpload.addOption({
+                            value: item.value,
+                            text: item.label
+                        });
+                    });
+
+                    tsCategoryUpload.refreshOptions(false);
+                },
+                error: function () {
+                    tsCategoryUpload.clearOptions();
+                    tsCategoryUpload.addOption({
+                        value: "",
+                        text: "-- Error loading categories --"
+                    });
+                    tsCategoryUpload.refreshOptions(false);
+                }
+            });
+        }
+
+        function loadFileData() {
+            var vessel = $(".slcVessel").val();
+            var vesselType = $(".slcVesselType").val();
+            var cat = $(".txtCategory").val();
+
+            if (!vessel || !vesselType) {
+                return;
+            }
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/getFileData'); ?>",
+                type: "POST",
+                data: {
+                    vessel: vessel,
+                    vesselType: vesselType,
+                    category: cat
+                },
+                beforeSend: function () {
+                    $("#tbodyFile").html(
+                        '<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+                },
+                success: function (res) {
+                    $("#tbodyFile").html(res);
+                },
+                error: function () {
+                    $("#tbodyFile").html(
+                        '<tr><td colspan="6" class="text-center">Error loading data</td></tr>');
+                }
+            });
+        }
+
+
+        function loadfilenameOption() {
+            var slcVesselUpload = $(".slcVesselUpload").val();
+            var slcVesselTypeUpload = $(".slcVesselTypeUpload").val();
+            var tsCategoryUpload = $(".txtCategoryUpload").val();
+
+
+            if (!slcVesselUpload || !slcVesselTypeUpload || !tsCategoryUpload) {
+                slcFileNameUpload.clearOptions();
+                slcFileNameUpload.addOption({
+                    value: "",
+                    text: "Select File Name"
+                });
+                slcFileNameUpload.refreshOptions(false);
+                return;
+            }
+
+            $.ajax({
+                url: "<?php echo base_url('listFile/getFileName'); ?>",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    category: tsCategoryUpload
+                },
+                success: function (data) {
+                    console.log(data);
+
+                    slcFileNameUpload.clearOptions();
+                    slcFileNameUpload.addOption({
+                        value: "",
+                        text: "Select File Name"
+                    });
+
+                    $.each(data, function (i, item) {
+                        slcFileNameUpload.addOption({
+                            value: item.value,
+                            text: item.label
+                        });
+                    });
+
+                    slcFileNameUpload.refreshOptions();
+                },
+                error: function () {
+                    slcFileNameUpload.clearOptions();
+                    slcFileNameUpload.addOption({
+                        value: "",
+                        text: "-- Error loading File Names --"
+                    });
+                    slcFileNameUpload.refreshOptions();
+                }
+            });
+        }
+
+        function updateStatus(actionName, id_file) {
+            if (actionName === 'update-status-master') {
+                Swal.fire({
+                    title: 'Master Approval Confirmation',
+                    text: "Are you sure you want to approve as MASTER?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, Approve',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        processUpdateStatus(actionName, id_file);
+                        return false;
+                    }
+                });
+            } else {
+                showReviewModal(actionName, id_file);
+            }
+        }
+
+        function showReviewModal(actionName, id_file) {
+            window.currentReviewAction = null;
+            window.currentActionName = actionName;
+            window.currentFileId = id_file;
+
+            var actionDisplayNames = {
+                'update-status-os': 'OS',
+                'update-status-deck': 'DECK',
+                'update-status-engine': 'ENGINE'
+            };
+
+            var reviewType = actionDisplayNames[actionName] || 'REVIEW';
+
+
+            $('#review-modal-title').text(reviewType + ' Review');
+            $('#revisionRemarks').val('');
+            $('#revisionSection').hide();
+            $('#submitReviewBtn').hide();
+            $('#approveBtn').show();
+            $('#revisionBtn').show();
+            $('#labelsectionAction').show();
+
+            // Show modal
+            $('#revisi-modal').modal('show');
+        }
+
+        function selectReviewAction(actionType, actionName, id_file) {
+            if (actionType === 'approve') {
+                $('#revisi-modal').modal('hide');
+                processUpdateStatus(actionName, id_file);
+            } else if (actionType === 'revision') {
+                $('#revisionSection').show();
+                $('#labelsectionAction').hide();
+                $('#submitReviewBtn').show();
+                $('#approveBtn').hide();
+                $('#revisionBtn').hide();
+                window.currentReviewAction = 'revision';
+            }
+        }
+
+
+        function submitReview() {
+            var remarks = $('#revisionRemarks').val();
+            var actionName = window.currentActionName;
+            var id_file = window.currentFileId;
+
+            if (!remarks.trim()) {
+                Swal.fire({
+                    title: 'Warning!',
+                    text: 'Please enter revision remarks.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            $('#revisi-modal').modal('hide');
+            processRevisionStatus(actionName, id_file, remarks);
+        }
+
+        function processRevisionStatus(actionName, id_file, remarks) {
+            var formData = new FormData();
+            formData.append("slcFileNameUpload", id_file);
+            formData.append("action", actionName);
+            formData.append("remaks_revisi", remarks);
+            formData.append("status_revisi", "Y");
+            formData.append("flagrevision", "X");
+
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Submitting revision...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
             $.ajax({
                 url: "<?php echo base_url('listFile/saveToListFile'); ?>",
                 type: "POST",
                 data: formData,
-                dataType: "json",
                 contentType: false,
                 processData: false,
-                beforeSend: function() {
-                    $("#idLoadingSpinner").fadeIn(200);
-                },
-                success: function(res) {
-                    $("#idLoadingSpinner").fadeOut(200);
-
-                    if (res.status === "success") {
-                        alert(res.message);
-                        $("#modalUploadFile").modal("hide");
+                dataType: "json",
+                success: function (res) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Revision submitted successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
                         location.reload();
-                    } else {
-                        alert(res.message || "⚠️ Terjadi kesalahan.");
-                    }
+                    });
                 },
-                error: function(xhr, status, error) {
-                    $("#idLoadingSpinner").fadeOut(200);
-                    console.error("Upload error:", error);
-                    alert("Error uploading file, please try again!");
-                },
-                complete: function() {
-                    $("#btnUpload").prop("disabled", false).text("Upload");
+                error: function (xhr) {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to submit revision.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
             });
-        });
-    });
-
-    $(document).ready(function() {
-        getData("", "", "");
-
-        $("#btnSearch").click(function() {
-            FilterData();
-        });
-
-        $("#txtSearch").keypress(function(e) {
-            if (e.which === 13) {
-                getsearchOnEnter();
-            }
-        });
+        }
 
 
-        
-    });
+        function processUpdateStatus(actionName, id_file) {
+            var formData = new FormData();
+            formData.append("slcFileNameUpload", id_file);
+            formData.append("action", actionName);
 
-    function getData(txtSearch,startDate,endDate) {
-        $.ajax({
-            url: "<?php echo base_url('listFile/getData/search'); ?>",
-            type: "POST",
-            data: {
-                txtSearch: txtSearch,
-                startDate : startDate,
-                endDate : endDate
-            },
-            dataType: "json",
-            beforeSend: function() {
-                $("#idTbodyHistory").html(
-                    "<tr><td colspan='7' style='text-align:center;'>Loading...</td></tr>"
-                );
-            },
-            success: function(res) {
-                console.log(res)
-                if (res.trNya && res.trNya !== "") {
-                    $("#idTbodyHistory").html(res.trNya);
-                } else {
-                    $("#idTbodyHistory").html(
-                        "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>"
-                    );
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Updating status...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
                 }
-            },
-            error: function() {
-                $("#idTbodyHistory").html(
-                    "<tr><td colspan='7' style='text-align:center;color:red;'>Error loading data</td></tr>"
-                );
-            }
-        });
-    }
+            });
 
-
-    function FilterData() {
-        var txtSearch = $("#txtSearch").val();
-        var startDate = $("#startDate").val();
-        var endDate = $("#endDate").val();
-        getData(txtSearch, startDate, endDate);
-    }
-
-
-    function getsearchOnEnter() {
-        var txtSearch = $("#txtSearch").val();
-        var startDate = $("#startDate").val();
-        var endDate = $("#endDate").val();
-        getData(txtSearch, startDate, endDate);
-    }
-
-    function resetFilters() {
-        tsVessel.clear();
-        tsVesselType.clear();
-        tsCategory.clear();
-
-        tsCategory.clearOptions();
-        tsCategory.addOption({ value: "", text: "Select Category" });
-        tsCategory.refreshOptions(false);
-
-        $("#tbodyFile").html(
-            '<tr><td colspan="6" class="text-center text-muted">Select vessel & type</td></tr>'
-        );
-    }
-
-    function loadCategories() {
-        var vessel = $(".slcVessel").val();
-        var vesselType = $(".slcVesselType").val();
-
-        if (!vessel || !vesselType) {
-            if (tsCategory) {
-                tsCategory.clearOptions();
-                tsCategory.addOption({ value: "", text: "Select Category" });
-                tsCategory.refreshOptions(false);
-            }
-            return;
-        }
-
-        $.ajax({
-            url: "<?php echo base_url('listFile/getCategories'); ?>",
-            type: "GET",
-            dataType: "json",
-            data: {
-                vessel: vessel,
-                vesselType: vesselType
-            },
-            success: function(data) {
-                tsCategory.clearOptions();
-                tsCategory.addOption({ value: "", text: "Select Category" });
-                $.each(data, function(i, item) {
-                    tsCategory.addOption({ 
-                        value: item.value, 
-                        text: item.label 
+            $.ajax({
+                url: "<?php echo base_url('listFile/saveToListFile'); ?>",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: "json",
+                success: function (res) {
+                    console.log("Response:", res);
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Status updated successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        //return false;
+                        location.reload();
                     });
-                });
-
-                tsCategory.refreshOptions(false);
-            },
-            error: function() {
-                tsCategory.clearOptions();
-                tsCategory.addOption({ value: "", text: "-- Error loading categories --" });
-                tsCategory.refreshOptions(false);
-            }
-        });
-    }
-
-    function loadFileData() {
-        var vessel = $(".slcVessel").val();
-        var vesselType = $(".slcVesselType").val();
-        var cat = $(".txtCategory").val();
-
-        if (!vessel || !vesselType) {
-            return;
+                },
+                error: function (xhr) {
+                    console.log(xhr.responseText);
+                    Swal.fire({
+                        title: 'Failed!',
+                        text: 'An error occurred while updating status.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
         }
-
-        $.ajax({
-            url: "<?php echo base_url('listFile/getFileData'); ?>",
-            type: "POST",
-            data: {
-                vessel: vessel,
-                vesselType: vesselType,
-                category: cat
-            },
-            beforeSend: function() {
-                $("#tbodyFile").html(
-                    '<tr><td colspan="6" class="text-center">Loading...</td></tr>');
-            },
-            success: function(res) {
-                $("#tbodyFile").html(res);
-            },
-            error: function() {
-                $("#tbodyFile").html(
-                    '<tr><td colspan="6" class="text-center">Error loading data</td></tr>');
-            }
-        });
-    }
-
     </script>
 </head>
 
 <body style="background:#f5f7fa;font-family:'Segoe UI',Tahoma,sans-serif;">
-    <section id="container" style="position:relative;">
-        <div id="idLoadingSpinner" style="
+    <section id="container">
+        <section id="main-content">
+            <section class="wrapper site-min-height"
+                style="min-height:400px; font-family:'Segoe UI', Tahoma, sans-serif; background:#f9fafb; padding:28px;">
+                <div id="idLoadingSpinner" style="
                     display:none;
                     position:fixed;
                     top:0; left:0;
@@ -289,22 +645,19 @@
                     flex-direction:column;
                     ">
 
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 50 50"
-                style="margin:auto; background:none; display:block;">
-                <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"
-                    stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
-                    <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s"
-                        repeatCount="indefinite" />
-                </circle>
-            </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 50 50"
+                        style="margin:auto; background:none; display:block;">
+                        <circle cx="25" cy="25" r="20" fill="none" stroke="white" stroke-width="5"
+                            stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+                            <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25"
+                                dur="1s" repeatCount="indefinite" />
+                        </circle>
+                    </svg>
 
-            <p style="margin-top:20px; font-size:16px; color:#fff; font-weight:bold; text-align:center;">
-                ⏳ Please wait... Processing data
-            </p>
-        </div>
-        <main id="main-content" class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
-            <section class="wrapper site-min-height"
-                style="min-height:400px; background:#f9fafb; padding:28px; position:relative;">
+                    <p style="margin-top:20px; font-size:16px; color:#fff; font-weight:bold; text-align:center;">
+                        ⏳ Please wait... Processing data
+                    </p>
+                </div>
 
                 <div id="mainContentDataTable"
                     style="border:1px solid  border-radius:10px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:28px; overflow:hidden;">
@@ -318,21 +671,25 @@
                             <i class="fa fa-folder-open text-primary" style="margin-right:8px;"></i> Form SMS
                         </h4>
                         <div style="display:flex; align-items:center; gap:10px;">
+                            <button type="button" id="btn-form-upload" class="btn btn-primary btn-sm"
+                                style="background:#2563eb; border:none; padding:8px 14px; border-radius:60px;
+                            color:white; font-size:14px; font-weight:500; display:flex; align-items:center; cursor:pointer;">
+                                <i class="fa fa-upload" style="margin-right:6px;"></i>Upload
+                            </button>
                             <button type="button" id="btnAdd" class="btn btn-primary btn-sm"
                                 style="background:#2563eb; border:none; padding:8px 14px; border-radius:60px;
                             color:white; font-size:14px; font-weight:500; display:flex; align-items:center; cursor:pointer;">
                                 <i class="fa fa-download" style="margin-right:6px;"></i>Download
                             </button>
+
                             <input type="text" id="txtSearch" style="border:1px solid #d1d5db; border-radius:30px; padding:8px 12px;
-                                font-size:14px; width:200px; "placeholder="Search...">
-                             <input type="date" id="startDate" 
-                                style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
+                                font-size:14px; width:200px; " placeholder="Search...">
+                            <input type="date" id="startDate" style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
                                 font-size:14px; width:150px;">
 
                             <span style="font-size:14px; color:#6b7280;">To</span>
 
-                            <input type="date" id="endDate"
-                                style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
+                            <input type="date" id="endDate" style="border:1px solid #d1d5db; border-radius:30px; padding:2px 12px;
                                 font-size:14px; width:150px;">
 
                             <button id="btnSearch"
@@ -345,48 +702,68 @@
 
                     <div style="padding:18px;">
                         <div style="overflow-x:auto; border-radius:8px; ">
-                            <table style="width:100%; border-collapse:collapse; font-family:'Inter','Segoe UI',sans-serif;x
-                                font-size:14px; color:white;">
+                            <table
+                                style="width:100%; border-collapse:collapse; border:1px solid white; font-family:'Inter','Segoe UI',sans-serif; font-size:14px; color:white;">
                                 <thead>
+
                                     <tr style="background-color:#7192AF; text-align:left;">
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            No</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Username</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Vessel</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            File Name</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Vessel Typec</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Old File</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            New File</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Category</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Remarks</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Download Time</th>
-                                        <th style="padding:12px 14px; border-bottom:2px solid  font-weight:600;">
-                                            Upload Time</th>
+
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">No</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Username</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Vessel</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Departement</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">File Name</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">New File</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Category</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Remarks</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; vertical-align:middle;"
+                                            rowspan="2">Upload Time</th>
+
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px; font-weight:600; text-align:center;"
+                                            colspan="4">Approval</th>
+                                        <th style="padding:12px 14px; border:1px solid white; border-bottom:2px solid #333; font-weight:600; text-align:center;"
+                                            colspan="4" rowspan="2">Status</th>
+                                    </tr>
+
+
+                                    <tr style="background-color:#7192AF; text-align:center;">
+
+                                        <td colspan="12" style="display:none;"></td>
+
                                         <th
-                                            style="padding:12px 14px; border-bottom:2px solid  font-weight:600; text-align:center;">
-                                            Action</th>
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Master</th>
+                                        <th
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Os</th>
+                                        <th
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Deck</th>
+                                        <th
+                                            style="padding:8px 10px; border:1px solid white; border-bottom:2px solid #333; font-weight:600;">
+                                            Engine</th>
                                     </tr>
                                 </thead>
                                 <tbody id="idTbodyHistory">
-
+                                    <!-- Data akan diisi di sini -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
+                <!-- start page Download File Form SMS -->
                 <div id="mainContentDownloadFile" style="display:none; border:1px solid  
                     border-radius:10px; background:#ffffff; margin-bottom:28px; 
-                    box-shadow:0 4px 10px rgba(0,0,0,0.05); overflow:hidden;">
+                    box-shadow:0 4px 10px rgba(0,0,0,0.05); overflow:visible;">
 
                     <div
                         style="display:flex; justify-content:space-between; align-items:center;
@@ -407,7 +784,7 @@
                         <div style="display:flex; gap:20px; flex-wrap:wrap;">
                             <div style="flex:1; min-width:220px;">
                                 <label
-                                    style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Name 
+                                    style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">Name
                                     Vessel</label>
                                 <select name="slcVessel" class="slcVessel" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;
                                     background:#f9fafb; font-size:14px;">
@@ -468,33 +845,170 @@
                     </div>
                 </div>
 
+                <!-- end page Download File Form SMS -->
+
+                <!-- start page Upload File Form SMS -->
+
+                <div id="content-file-upload" style="display:none; border:1px solid  
+                    border-radius:10px; background:#ffffff; margin-bottom:28px; 
+                    box-shadow:0 4px 10px rgba(0,0,0,0.05); overflow:visible;">
+
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center;
+                         padding:16px 20px; background:linear-gradient(90deg,#f9fafb,#f3f4f6); border-bottom:1px solid ">
+                        <h4 style="margin:0; font-weight:600; color:#111827; font-size:17px;
+                            display:flex; align-items:center; letter-spacing:0.3px;">
+                            <i class="fa fa-upload" style="color:#2563eb; margin-right:8px;"></i> Form Upload File
+                            SMS
+                        </h4>
+                        <button type="button" id="btn-form-cancel-upload"
+                            style="background:#ef4444; border:none; padding:8px 14px; border-radius:6px;
+                            color:white; font-size:14px; font-weight:500; display:flex; align-items:center; cursor:pointer;">
+                            <i class="fa fa-times" style="margin-right:6px;"></i>Cancel
+                        </button>
+                    </div>
+
+                    <div style="padding:20px; background:#ffffff; border-bottom:1px solid #f3f4f6;">
+                        <form id="formUploadSMS" method="POST" enctype="multipart/form-data">
+                            <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+
+                                <div style="flex:1; min-width:220px;">
+                                    <label
+                                        style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
+                                        Departement
+                                    </label>
+                                    <select name="slcDepartementUpload" class="slcDepartementUpload" style="width:100%; height:42px; padding:10px; border:1px solid #d1d5db;
+                                     border-radius:8px; background:#f9fafb; font-size:14px;">
+                                        <option value="DECK">DECK</option>
+                                        <option value="ENGINE">ENGINE</option>
+                                    </select>
+                                </div>
+
+                                <div style="flex:1; min-width:220px;">
+                                    <label
+                                        style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
+                                        Name Vessel
+                                    </label>
+                                    <select name="slcVesselUpload" class="slcVesselUpload" style="width:100%; height:42px; padding:10px; border:1px solid #d1d5db;
+                                     border-radius:8px; background:#f9fafb; font-size:14px;">
+                                        <?php echo $vessel; ?>
+                                    </select>
+                                </div>
+
+                                <div style="flex:1; min-width:200px;">
+                                    <label
+                                        style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
+                                        Vessel Type
+                                    </label>
+                                    <select name="slcVesselTypeUpload" class="slcVesselTypeUpload" style="width:100%; height:42px; padding:10px; border:1px solid #d1d5db;
+                                         border-radius:8px; background:#f9fafb; font-size:14px;">
+                                        <?php echo $vesselType; ?>
+                                    </select>
+                                </div>
+
+                                <div style="flex:1; min-width:200px;">
+                                    <label
+                                        style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
+                                        Category
+                                    </label>
+                                    <select name="txtCategoryUpload" class="txtCategoryUpload" style="width:100%; height:42px; padding:10px; border:1px solid #d1d5db;
+                                    border-radius:8px; background:#f9fafb; font-size:14px;">
+                                        <option value="">Select Category</option>
+                                    </select>
+                                </div>
+
+                                <div style="flex:1; min-width:200px;">
+                                    <label
+                                        style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
+                                        File Name
+                                    </label>
+                                    <select name="slcFileNameUpload" class="slcFileNameUpload" style="width:100%; height:42px; padding:10px; border:1px solid #d1d5db;
+                                         border-radius:8px; background:#f9fafb; font-size:14px;">
+                                        <option value="">Select File Name</option>
+                                    </select>
+
+                                </div>
+                                <input type="hidden" name="action" id="action" value="upload-file-save">
+                                <div style="flex:1; min-width:220px;">
+                                    <label
+                                        style="font-size:14px; color:#374151; font-weight:600; display:block; margin-bottom:6px;">
+                                        Upload File<span style="color:red;margin-left:3px;">*</span>
+                                    </label>
+                                    <input type="file" name="fileUpload" id="fileUpload"
+                                        accept=".xls,.xlsx,.csv,.txt,.pdf"
+                                        style="width:100%; height:42px; padding:10px; border:1px solid #d1d5db; border-radius:8px; background:#f9fafb; font-size:14px;"
+                                        required>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div style="padding:20px; display:flex; gap:20px; justify-content:flex-end; background:#ffffff;">
+                        <button type="button" onclick="resetFilters()" style="background:#6b7280; border:none; height:42px; padding:0 24px;
+                          border-radius:8px; color:white; font-size:14px; font-weight:500; cursor:pointer;">
+                            <i class="fa fa-undo" style="margin-right:6px;"></i> Reset Filters
+                        </button>
+
+                        <button type="submit" form="formUploadSMS" style="background:#2563eb; border:none; height:42px; padding:0 24px;
+                             border-radius:8px; color:white; font-size:14px; font-weight:500; cursor:pointer;">
+                            <i class="fa fa-paper-plane" style="margin-right:6px;"></i> Submit
+                        </button>
+                    </div>
+                </div>
+                <!-- end page Upload File Form SMS -->
+
+
+
             </section>
-        </main>
+        </section>
+
     </section>
 </body>
 
 </html>
 
-<div class="modal fade" id="modalUploadFile" tabindex="-1" role="dialog">
+<!-- Modal HTML (Bootstrap 3) -->
+<div class="modal fade" id="revisi-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form id="formUploadFile" enctype="multipart/form-data">
-                <div class="modal-header" style="background-color:#7192AF;">
-                    <h5 class="modal-title">Upload File</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="idFile" id="idFile">
-                    <div class="form-group">
-                        <label for="fileUpload">Choose file</label>
-                        <input type="file" name="fileUpload" id="fileUpload" class="form-control" required>
+            <div class="modal-header" style="background-color:#7192AF;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" id="review-modal-title">REVIEW</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="control-label" id="labelsectionAction"><strong>Select Action</strong></label>
+                    <div class="row" style="margin-bottom:15px;">
+                        <div class="col-xs-6">
+                            <button type="button" id="approveBtn"
+                                onclick="selectReviewAction('approve', window.currentActionName, window.currentFileId)"
+                                class="btn btn-success btn-block">
+                                Approve
+                            </button>
+                        </div>
+                        <div class="col-xs-6">
+                            <button type="button" id="revisionBtn"
+                                onclick="selectReviewAction('revision', window.currentActionName, window.currentFileId)"
+                                class="btn btn-warning btn-block">
+                                Revision Needed
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="revisionSection" style="display:none;">
+                        <label class="control-label"><strong>Revision Remarks</strong></label>
+                        <textarea id="revisionRemarks" class="form-control" rows="4"
+                            placeholder="Enter revision notes here..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Upload</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" id="submitReviewBtn" onclick="submitReview()" class="btn btn-primary"
+                    style="display:none;">
+                    Submit
+                </button>
+            </div>
         </div>
     </div>
 </div>
